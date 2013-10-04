@@ -54,8 +54,7 @@ def parse_config(config_file):
     
     for participant_name in participants:
         return_val[participant_name] = {
-                                        "IP": IP(participants[participant_name]["IP"]),
-                                        "MAC": MAC(participants[participant_name]["MAC"])
+                                        "IP": IP(participants[participant_name]["IP"])
                                        }
     return return_val
 

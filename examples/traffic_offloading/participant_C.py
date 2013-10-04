@@ -3,7 +3,7 @@
 #  <website link>
 #
 #  File:
-#        main.py
+#        core.py
 #
 #  Project:
 #        Software Defined Exchange (SDX)
@@ -17,7 +17,7 @@
 #        Copyright (C) 2012, 2013 Georgia Institute of Technology
 #              Network Operations and Internet Security Lab
 #
-#  License:
+#  Licence:
 #        This file is part of the SDX development base package.
 #
 #        This file is free code: you can redistribute it and/or modify it under
@@ -38,33 +38,34 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-from pyretic.modules.arp import *
-from pyretic.modules.mac_learner import *
-
 ## SDX-specific imports
-from pyretic.sdx.lib.core import *
+from pyretic.sdx.lib.common import *
 
 ## General imports
+import json
 import os
 
 cwd = os.getcwd()
 
-### SDX Platform ###
-def sdx():
-    ####
-    #### Initialize SDX
-    ####
-    (base, participants) = sdx_parse_config(cwd + '/pyretic/sdx/sdx_global.cfg')
+def parse_config(config_file):
+    participants = json.load(open(config_file, 'r'))
     
-    ####
-    #### Apply policies from each participant
-    ####
-    sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
+    return_val = {}
     
-    return sdx_platform(base)
+    for participant_name in participants:
+        return_val[participant_name] = {
+                                        "IP": IP(participants[participant_name]["IP"])
+                                       }
+    return return_val
 
-### Main ###
-def main():
-    """Handle ARPs, SDX and do MAC learning"""
-    return if_(ARP, arp(), sdx()) # >> mac_learner)
-    #return sdx()
+def policy(participant, fwd):
+    '''
+        Specify participant policy
+    '''
+    participants = parse_config(cwd + "/pyretic/sdx/examples/simple/local.cfg")
+    
+    return (
+        (match(dstip=participants["A"]["IP"]) & fwd(participant.peers['B'])) +
+        (match(dstip=participants["B"]["IP"]) & fwd(participant.peers['B'])) +
+        (match(dstip=participants["C"]["IP"]) & fwd(participant.phys_ports[0]))
+    )
