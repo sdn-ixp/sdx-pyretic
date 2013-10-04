@@ -38,6 +38,7 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
+from pyretic.modules.arp import *
 from pyretic.modules.mac_learner import *
 
 ## SDX-specific imports
@@ -48,20 +49,22 @@ import os
 
 cwd = os.getcwd()
 
-### SDX Platform: Main ###
-def main():
+### SDX Platform ###
+def sdx():
     ####
     #### Initialize SDX
     ####
-    (sdx, participants) = sdx_parse_config(cwd + '/pyretic/sdx/sdx_global.cfg')
+    (base, participants) = sdx_parse_config(cwd + '/pyretic/sdx/sdx_global.cfg')
     
     ####
     #### Apply policies from each participant
     ####
-    sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', sdx, participants)
+    sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
     
-    return_policy = sdx_platform(sdx)
-    
-    print return_policy
-    
-    return return_policy
+    return sdx_platform(base)
+
+### Main ###
+def main():
+    """Handle ARPs, SDX and do MAC learning"""
+    return if_(ARP, arp(), sdx())
+    #return sdx()
