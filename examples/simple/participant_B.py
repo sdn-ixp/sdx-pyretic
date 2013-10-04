@@ -65,7 +65,7 @@ def policy(participant, fwd):
     '''
     participants = parse_config(cwd + "/pyretic/sdx/examples/simple/local.cfg")
     
-    participant.policies = (
+    return (
         (match(dstip=participants["B"]["IP"]) & fwd(participant.phys_ports[0])) +
         (match(dstip=participants["A"]["IP"]) & fwd(participant.peers['A']))
     )

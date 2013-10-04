@@ -190,8 +190,13 @@ def sdx_parse_policies(policy_file, sdx, participants):
         Get participants policies
     '''
     for participant_name in sdx_policies:
-        participant_policy = import_module(sdx_policies[participant_name])
-        participant_policy.policy(participants[participant_name], sdx.fwd)
+        participant = participants[participant_name]
+        
+        policy_modules = [import_module(sdx_policies[participant_name][i]) for i in range(0, len(sdx_policies[participant_name]))]
+        
+        participant.policies = parallel([
+             policy_modules[i].policy(participant, sdx.fwd) for i in range(0, len(sdx_policies[participant_name]))
+        ])
 
 def sdx_platform(sdx_config):
     '''
