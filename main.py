@@ -66,5 +66,7 @@ def sdx():
 ### Main ###
 def main():
     """Handle ARPs, SDX and do MAC learning"""
-    return if_(ARP, arp(), sdx()) # >> mac_learner)
+    sdx_policy = sdx()
+    print sdx_policy
+    return if_(ARP, arp(), sdx_policy) # >> mac_learner)
     #return sdx()

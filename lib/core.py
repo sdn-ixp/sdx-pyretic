@@ -100,7 +100,7 @@ def sdx_restrict_state(sdx_config, participant):
         match_all_output_var = match_all_output_var | match(state=output_var)
     return if_(match_all_output_var, 
                passthrough, 
-               match(state=sdx_config.participant_id_to_in_var[participant.id_]) & 
+               match(state=sdx_config.participant_id_to_in_var[participant.id_]) >> 
                     #parallel([sdx_from(participant.peers[peer_name]) for peer_name in participant.peers]) & '''Might not happen, as we are providing limited view to the participants''' 
                         participant.policies
               )
@@ -113,7 +113,7 @@ def sdx_preprocessing(sdx_config):
     preprocessing_policies = []
     for participant in sdx_config.participants:
         for port in participant.phys_ports:
-            preprocessing_policies.append((match(inport=port.id_) & 
+            preprocessing_policies.append((match(inport=port.id_) >> 
                 modify(state=sdx_config.participant_id_to_in_var[participant.id_])))
     return parallel(preprocessing_policies)
 
@@ -124,7 +124,7 @@ def sdx_postprocessing(sdx_config):
     '''
     postprocessing_policies = []
     for output_var in sdx_config.out_var_to_port:
-        postprocessing_policies.append((match(state=output_var) & pop("state") & 
+        postprocessing_policies.append((match(state=output_var) >> modify(state=None) >> 
             fwd(sdx_config.out_var_to_port[output_var].id_)))
     return parallel(postprocessing_policies)
 
