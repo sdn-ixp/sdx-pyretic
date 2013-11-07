@@ -60,9 +60,10 @@ def policy(participant, fwd):
     '''
         Specify participant policy
     '''
-    participants = parse_config(cwd + "/pyretic/sdx/examples/simple/local.cfg")
+    participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering/local.cfg")
     
     return (
         (parallel([match(dstip=participants["A"]["IP"][i]) for i in range(len(participants["A"]["IP"]))]) >> fwd(participant.phys_ports[0])) +
-        (parallel([match(dstip=participants["B"]["IP"][i]) for i in range(len(participants["B"]["IP"]))]) >> fwd(participant.peers['B']))
+        (parallel([match(dstip=participants["B"]["IP"][i]) for i in range(len(participants["B"]["IP"]))]) >> fwd(participant.peers['B'])) +
+        (parallel([match(dstip=participants["C"]["IP"][i]) for i in range(len(participants["C"]["IP"]))]) >> fwd(participant.peers['B']))
     )

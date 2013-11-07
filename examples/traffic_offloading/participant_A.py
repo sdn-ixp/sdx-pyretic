@@ -50,22 +50,20 @@ cwd = os.getcwd()
 def parse_config(config_file):
     participants = json.load(open(config_file, 'r'))
     
-    return_val = {}
-    
     for participant_name in participants:
-        return_val[participant_name] = {
-                                        "IP": IP(participants[participant_name]["IP"])
-                                       }
-    return return_val
+        for i in range(len(participants[participant_name]["IP"])):
+            participants[participant_name]["IP"][i] = IP(participants[participant_name]["IP"][i])
+    
+    return participants
 
 def policy(participant, fwd):
     '''
         Specify participant policy
     '''
-    participants = parse_config(cwd + "/pyretic/sdx/examples/simple/local.cfg")
+    participants = parse_config(cwd + "/pyretic/sdx/examples/traffic_offloading/local.cfg")
     
     return (
-        (match(dstip=participants["A"]["IP"]) >> fwd(participant.phys_ports[0])) +
-        (match(dstip=participants["B"]["IP"]) >> fwd(participant.peers['B'])) +
-        (match(dstip=participants["C"]["IP"]) >> fwd(participant.peers['B']))
+        (parallel([match(dstip=participants["A"]["IP"][i]) for i in range(len(participants["A"]["IP"]))]) >> fwd(participant.phys_ports[0])) +
+        (parallel([match(dstip=participants["B"]["IP"][i]) for i in range(len(participants["B"]["IP"]))]) >> fwd(participant.peers['B'])) +
+        (parallel([match(dstip=participants["C"]["IP"][i]) for i in range(len(participants["C"]["IP"]))]) >> fwd(participant.peers['B']))
     )

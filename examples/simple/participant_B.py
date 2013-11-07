@@ -50,13 +50,11 @@ cwd = os.getcwd()
 def parse_config(config_file):
     participants = json.load(open(config_file, 'r'))
     
-    return_val = {}
-    
     for participant_name in participants:
-        return_val[participant_name] = {
-                                        "IP": IP(participants[participant_name]["IP"])
-                                       }
-    return return_val
+        for i in range(len(participants[participant_name]["IP"])):
+            participants[participant_name]["IP"][i] = IP(participants[participant_name]["IP"][i])
+    
+    return participants
 
 def policy(participant, fwd):
     '''
@@ -65,6 +63,6 @@ def policy(participant, fwd):
     participants = parse_config(cwd + "/pyretic/sdx/examples/simple/local.cfg")
     
     return (
-        (match(dstip=participants["B"]["IP"]) >> fwd(participant.phys_ports[0])) +
-        (match(dstip=participants["A"]["IP"]) >> fwd(participant.peers['A']))
+        (parallel([match(dstip=participants["B"]["IP"][i]) for i in range(len(participants["B"]["IP"]))]) >> fwd(participant.phys_ports[0])) +
+        (parallel([match(dstip=participants["A"]["IP"][i]) for i in range(len(participants["A"]["IP"]))]) >> fwd(participant.peers['A']))
     )

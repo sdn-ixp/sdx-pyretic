@@ -49,6 +49,9 @@ import os
 
 cwd = os.getcwd()
 
+BGP_PORT = 179
+BGP = match(srcport=BGP_PORT) | match(dstport=BGP_PORT)
+
 ### SDX Platform ###
 def sdx():
     ####
@@ -65,8 +68,8 @@ def sdx():
 
 ### Main ###
 def main():
-    """Handle ARPs, SDX and do MAC learning"""
+    """Handle ARPs, BGPs, SDX and then do MAC learning"""
     sdx_policy = sdx()
     print sdx_policy
-    return if_(ARP, arp(), sdx_policy) # >> mac_learner)
-    #return sdx()
+    
+    return if_(ARP, arp(), if_(BGP, identity, sdx_policy)) >> mac_learner()
