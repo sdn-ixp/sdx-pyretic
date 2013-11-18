@@ -43,9 +43,11 @@ from pyretic.modules.mac_learner import *
 
 ## SDX-specific imports
 from pyretic.sdx.lib.core import *
+import pyretic.sdx.QuaggaInterface.quagga_interface as qI
 
 ## General imports
 import os
+import thread
 
 cwd = os.getcwd()
 
@@ -63,13 +65,19 @@ def sdx():
     #### Apply policies from each participant
     ####
     sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
-    
-    return sdx_platform(base)
+    print base
+    return (sdx_platform(base),base)
 
 ### Main ###
 def main():
     """Handle ARPs, BGPs, SDX and then do MAC learning"""
-    sdx_policy = sdx()
-    print sdx_policy
+    (sdx_policy,sdx_base) = sdx()
+    print sdx_base
+    for participant in sdx_base.participants:
+        print participant.id_
+    #print sdx_policy
+    
+    # Start the Quagga Interface
+    thread.start_new_thread(qI.main(sdx_base))
     
     return if_(ARP, arp(), if_(BGP, identity, sdx_policy)) >> mac_learner()

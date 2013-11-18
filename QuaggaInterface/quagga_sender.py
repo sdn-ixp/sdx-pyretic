@@ -61,7 +61,7 @@ def main():
     # Create an update packet
     aspath_test=aspath(0,'1000,1002,1030')
     attr_test=attr(aspath=aspath_test)
-    update_object=info(peer='192.168.56.102',attr=attr_test,uptime=10)
+    update_object=info(peer='172.0.0.11',attr=attr_test,uptime=10)
     jmesg=jmessage(tag='sender:quagga',type='BGP_UPDATE',
             update=update_object,prefix=prefix(address='10.0.0.0',
                 prefixlen=16,family='AF_INET'))

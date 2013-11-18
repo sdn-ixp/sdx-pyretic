@@ -53,10 +53,32 @@ class SDX(object):
     """Represent a SDX platform configuration"""
     def __init__(self):
         self.participants = []
-
+        self.sdx_ports={}
         self.participant_id_to_in_var = {}
         self.out_var_to_port = {}
         self.port_id_to_out_var = {}
+    
+    def get_participantName(self,ip):
+        pname=''
+        print self.sdx_ports
+        print ip
+        for participant_name in self.sdx_ports:
+            for port in self.sdx_ports[participant_name]:
+                print port.ip
+                if IP(ip)==port.ip:
+                    print "IP matched"
+                    pname=participant_name
+                    break
+        return pname
+    def get_neighborList(self,sname):
+        print type(sname)
+        neighbor_list=[]
+        for participant in self.participants:
+            print participant.peers.keys()
+            if sname in participant.peers.keys():
+                print "Neighbor found",participant.id_
+                neighbor_list.append(participant.id_) 
+        return neighbor_list
     
     def add_participant(self, participant):
         self.participants.append(participant)
@@ -66,6 +88,8 @@ class SDX(object):
             self.port_id_to_out_var[port.id_] = "out" + participant.id_.upper() + "_" + str(i)
             self.out_var_to_port["out" + participant.id_.upper() + "_" + str(i)] = port
             i += 1
+    
+    #def return_participant(self,ip):
     
     def fwd(self, port):
         if isinstance(port, PhysicalPort):
@@ -151,7 +175,7 @@ def sdx_parse_config(config_file):
     sdx = SDX()
     
     sdx_config = json.load(open(config_file, 'r'))
-
+    print sdx_config
     sdx_ports = {}
     sdx_vports = {}
     sdx_participants = {}
@@ -163,10 +187,11 @@ def sdx_parse_config(config_file):
         
         ''' Adding physical ports '''
         participant = sdx_config[participant_name]
-        sdx_ports[participant_name] = [PhysicalPort(id_ = participant["Ports"][i]['Id'], mac = MAC(participant["Ports"][i]["MAC"])) for i in range(0, len(participant["Ports"]))]     
+        sdx_ports[participant_name] = [PhysicalPort(id_ = participant["Ports"][i]['Id'], mac = MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
+        print sdx_ports[participant_name][0].ip
         ''' Adding virtual port '''
         sdx_vports[participant_name] = VirtualPort() #Check if we need to add a MAC here
-        
+    sdx.sdx_ports=sdx_ports   
     for participant_name in sdx_config:
         peers = {}
         
