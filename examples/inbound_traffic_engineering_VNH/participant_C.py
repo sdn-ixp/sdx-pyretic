@@ -54,9 +54,8 @@ def parse_config(config_file):
     for participant_name in participants:
         for i in range(len(participants[participant_name]["IPP"])):
             participants[participant_name]["IPP"][i] = IPPrefix(participants[participant_name]["IPP"][i])
-        for vnh in participants[participant_name]["VNH"].keys():
-            for j in range(len(participants[participant_name]["VNH"][vnh])):
-                participants[participant_name]["VNH"][vnh][j]=IPPrefix(participants[participant_name]["VNH"][vnh][j])
+        for j in range(0,len(participants[participant_name]["Policy1"])):
+            participants[participant_name]["Policy1"][j]=IPPrefix(participants[participant_name]["Policy1"][j])
                 
     print participants
     return participants 
@@ -67,16 +66,16 @@ def policy(participant, fwd):
         Specify participant policy
     '''
     participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
-    
-    return (
+    final_policy= (
         (parallel([match(dstip=participants["A"]["IPP"][i]) for i in range(len(participants["A"]["IPP"]))]) >> 
          fwd(participant.peers['B'])) +
         (parallel([match(dstip=participants["B"]["IPP"][i]) for i in range(len(participants["B"]["IPP"]))]) >> 
          fwd(participant.peers['B']))+
-        # C's policy to get web traffic via Router C1 and rest from C2
-        (match(dstip=IPAddr(participants["C"]["VNH"].keys()[0]))>>
+        # C's incoming policy is to get web traffic via Router C1 and rest from C2
+        # Note that participants are not aware of VNH assignment. VNH is SDX's runtime activity only.
+        (parallel([match(dstip=participants["C"]["Policy1"][i]) for i in range(len(participants["C"]["Policy1"]))])>>
          (if_(match(dstport=80),(modify(dstip=participant.phys_ports[0].ip)>>fwd(participant.phys_ports[0])),
               (modify(dstip=participant.phys_ports[1].ip)>>fwd(participant.phys_ports[1])))))
-        #(parallel([match(dstip=participants["C"]["IPP"][i]) for i in range(0, len(participants["C"]["IPP"])/2)]) >> fwd(participant.phys_ports[0])) +
-        #(parallel([match(dstip=participants["C"]["IPP"][i]) for i in range(len(participants["C"]["IPP"])/2, len(participants["C"]["IPP"]))]) >> fwd(participant.phys_ports[1]))
     )
+    #print final_policy.policies[0]
+    return final_policy
