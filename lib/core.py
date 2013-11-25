@@ -207,6 +207,18 @@ def sdx_parse_config(config_file):
     
     return (sdx, sdx_participants)
 
+policy_prefix_map={}
+def is_Active(policy_in,pnum,participant_name):
+    flag_active=True
+    for temp in policy_in.policies:
+        pnum+=1
+        print temp.policies
+        print len(temp.policies)
+        for temp2 in temp.policies[0].policies:
+            print temp2
+            print temp2.map
+    return flag_active
+
 def sdx_parse_policies(policy_file, sdx, participants):
     
     sdx_policies = json.load(open(policy_file, 'r'))
@@ -214,14 +226,21 @@ def sdx_parse_policies(policy_file, sdx, participants):
     ''' 
         Get participants policies
     '''
+    cnt=0
     for participant_name in sdx_policies:
         participant = participants[participant_name]
-        
+        print participant_name
         policy_modules = [import_module(sdx_policies[participant_name][i]) for i in range(0, len(sdx_policies[participant_name]))]
-        
-        participant.policies = parallel([
-             policy_modules[i].policy(participant, sdx.fwd) for i in range(0, len(sdx_policies[participant_name]))
-        ])
+        policy_participant=[]
+        for i in range(0,len(sdx_policies[participant_name])):
+            pnum=cnt+i*100
+            policy_in =policy_modules[i].policy(participant, sdx.fwd)
+            flag_active=is_Active(policy_in,pnum,participant_name)
+            if flag_active==True:
+                policy_participant.append(policy_in)
+                
+        participant.policies = parallel([policy_participant[i] for i in range(0, len(policy_participant))])
+        print participant.policies
 
 def sdx_platform(sdx_config):
     '''
