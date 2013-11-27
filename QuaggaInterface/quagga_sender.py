@@ -22,17 +22,10 @@ def modify_jsonMessage(json_message):
     totalsent = 0
     dmp=json.dumps(json_message, cls=ComplexEncoder,default=convert_to_builtin_type)
     s.sendall(dmp)
-    #s.sendall(json.dumps(json_message, cls=ComplexEncoder))
 
     # Receive return value
     recvdata=s.recv(1024)
-    #while True:
-    #    data = s.recv(1024)
-    #    print data
-    #    if not data:
-    #        s.close()
-    #        break
-    #    recvdata=recvdata+data
+
 
     return recvdata
 

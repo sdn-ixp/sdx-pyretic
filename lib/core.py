@@ -10,8 +10,8 @@
 #
 #  Author:
 #        Laurent Vanbever
-#        Muhammad Shahbaz
 #        Arpit Gupta
+#        Muhammad Shahbaz
 #
 #  Copyright notice:
 #        Copyright (C) 2012, 2013 Georgia Institute of Technology
@@ -48,7 +48,7 @@ from importlib import import_module
 ###
 ### SDX classes
 ###
-prefix_2_participant={'100.0.0.0/16':{'A':['B']},
+prefix_2_participant={'100.0.0.0/16':{'A':['B'],'B':['C']},
                       '120.0.0.0/16':{'B':['A','C']},
                       '140.0.0.0/16':{'C':['B'],'B':['A']},
                       '150.0.0.0/16':{'C':['B'],'B':['A']},
@@ -273,6 +273,7 @@ def sdx_parse_policies(policy_file, sdx, participants):
         participant.policies = parallel([policy_participant[i] for i in range(0, len(policy_participant))])
         #print participant.policies
     # Now generate the prefix_2_policy from policy_2_prefix
+    print prefixes
     for prefix in prefixes:
         sdx.prefix_2_policy[prefix]={}
         if prefix not in sdx.prefix_2_participant:
@@ -282,7 +283,13 @@ def sdx_parse_policies(policy_file, sdx, participants):
                 sdx.prefix_2_policy[prefix][announcer]={}
                 for participant in sdx.prefix_2_participant[prefix][announcer]:
                     policy_name=get_policy_name(sdx.policy_2_prefix,participant,prefix)
-                    sdx.prefix_2_policy[prefix][announcer][participant]=policy_name
+                    if policy_name!='':
+                        sdx.prefix_2_policy[prefix][announcer][participant]=policy_name
+                    
+                # Check for announcer's policy for its advertised prefixes
+                policy_name=get_policy_name(sdx.policy_2_prefix,announcer,prefix)
+                if policy_name!='':
+                    sdx.prefix_2_policy[prefix][announcer][announcer]=policy_name
     
     print "Created relevant Data Structures for VNH Assignments...."
     print "Policy_2_Prefix: ",sdx.policy_2_prefix

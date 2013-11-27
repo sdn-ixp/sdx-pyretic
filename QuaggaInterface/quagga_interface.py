@@ -74,15 +74,15 @@ def update_rib(jmesg,sdx_base):
     new_update=jmesg.update
     prefix_curr=(jmesg.prefix.address,jmesg.prefix.prefixlen)
     peer_curr=jmesg.update.peer
-    print sender_name
+    #print sender_name
     if sender_name=='':
         print "Error: Participant not found"
     else:
         neighbor_list=sdx_base.get_neighborList(sender_name)
-    print "neighbor list: ",neighbor_list
+    #print "neighbor list: ",neighbor_list
     for participant in sdx_base.participants:
         if participant.id_ in neighbor_list:
-            print "update: ",participant.id_
+            #print "update: ",participant.id_
             if prefix_curr not in participant.rib:
                 participant.rib[prefix_curr]={}
             elif peer_curr in participant.rib[prefix_curr]:
@@ -90,7 +90,7 @@ def update_rib(jmesg,sdx_base):
                 new_update=update_info(info1,jmesg.update)
             
             participant.rib[prefix_curr][peer_curr]=new_update
-            print "Rib:", participant.rib
+            #print "Rib:", participant.rib
 
 def getNew_VNH(peer,policy):
     # Very naiive logic for now, we can improve it later    
@@ -148,7 +148,7 @@ def VNH_assignment(jmesg,sdx_base):
             print "Update the affected participants/Prefixes"
             for participant in affected_participants:
                 #if participant !=peer_curr:
-                print participant
+                print 'Updating for the participant: ',participant
                 policy_temp=sdx_base.prefix_2_policy[prefix_curr][peer_curr][participant]
                 prefix_list=sdx_base.policy_2_prefix[participant][policy_temp]
                 if policy_temp not in sdx_base.policy_2_VNH[participant]:
@@ -157,7 +157,7 @@ def VNH_assignment(jmesg,sdx_base):
                     sdx_base.policy_2_VNH[participant][policy_temp][peer_curr]={}                   
                 for temp in prefix_list:
                     sdx_base.policy_2_VNH[participant][policy_temp][peer_curr][temp]=VNH_new
-                print sdx_base.policy_2_VNH
+            print "Updated policy_2_VNH: ",sdx_base.policy_2_VNH
                             
         else:
             print "There are no policies for updates from this sender"            
