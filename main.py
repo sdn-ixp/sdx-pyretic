@@ -59,22 +59,25 @@ def sdx():
     ####
     #### Initialize SDX
     ####
+    print "Parsing Global Config ....."
     (base, participants) = sdx_parse_config(cwd + '/pyretic/sdx/sdx_global.cfg')
     
     ####
     #### Apply policies from each participant
     ####
+    print "Parsing Participant's policies ..."
     sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
-    print base
+    #print base
     return (sdx_platform(base),base)
 
 ### Main ###
 def main():
     """Handle ARPs, BGPs, SDX and then do MAC learning"""
+    print "Parsing Configurations"
     (sdx_policy,sdx_base) = sdx()
     #print sdx_policy
-    for participant in sdx_base.participants:
-        print participant.id_
+    #for participant in sdx_base.participants:
+    #    print participant.id_
     #print sdx_policy
     
     # Start the Quagga Interface

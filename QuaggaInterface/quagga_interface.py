@@ -19,16 +19,16 @@ c2='150.0.0.0/16'
 
 VNH_map={'VNHB':'172.0.0.201','VNHC':'172.0.0.301','VNHA':'172.0.0.101'}
 
-# prefix_2_participant={c1:{'C':{'C':'policy1'},'B':{'B':'policy1','A':'policy1'}},
+# prefix_2_policy={c1:{'C':{'C':'policy1'},'B':{'B':'policy1','A':'policy1'}},
 #                       c2:{'C':{'C':'policy1'},'B':{'B':'policy1','A':'policy1'}}
 #                       }
 
-# participant_2_VNH={'A':{'policy1':{}},
+# policy_2_VNH={'A':{'policy1':{}},
 #                    'B':{'policy1':{'B':{c1:'VNHB',c2:'VNHB'}}},
 #                    'C':{'policy1':{'C':{}}} # No VNH assigned
 #                    }
 # 
-# policy_prefix_map={'A':{'policy1':[c1,c2]},
+# policy_2_prefix={'A':{'policy1':[c1,c2]},
 #                    'B':{'policy1':[c1,c2]},
 #                    'C':{'policy1':[c1,c2]}
 #                    }
@@ -39,17 +39,17 @@ VNH_map={'VNHB':'172.0.0.201','VNHC':'172.0.0.301','VNHA':'172.0.0.101'}
 #                    }
 
 
-prefix_2_participant={c1:{'C':{'A':'policy1'},'B':{'B':'policy1','A':'policy1'}},
-                      c2:{'C':{'A':'policy1'},'B':{'B':'policy1','A':'policy1'}}
-                      }
-
-participant_2_VNH={'A':{'policy1':{}},
-                   'B':{'policy1':{}}
-                   }
-
-policy_prefix_map={'A':{'policy1':[c1,c2]},
-                   'B':{'policy1':[c1,c2]}
-                   }
+# prefix_2_policy={c1:{'C':{'A':'policy1'},'B':{'B':'policy1','A':'policy1'}},
+#                       c2:{'C':{'A':'policy1'},'B':{'B':'policy1','A':'policy1'}}
+#                       }
+# 
+# policy_2_VNH={'A':{'policy1':{}},
+#                    'B':{'policy1':{}}
+#                    }
+# 
+# policy_2_prefix={'A':{'policy1':[c1,c2]},
+#                  'B':{'policy1':[c1,c2]}
+#                 }
 
 VNH_2_participant={'VNHB':{'A':([c1,c2],'B','policy1'),
                            'B':([c1,c2],'B','policy1')},
@@ -117,12 +117,12 @@ def VNH_assignment(jmesg,sdx_base):
     VNH_new=''
     nparticipant=''
     print prefix_curr
-    if prefix_curr in prefix_2_participant:
+    if prefix_curr in sdx_base.prefix_2_policy:
         vnh_flag=True
         
-        if peer_curr in prefix_2_participant[prefix_curr].keys():
+        if peer_curr in sdx_base.prefix_2_policy[prefix_curr].keys():
             print 'Update Sender requires VNH assignment for this prefix'
-            affected_participants=prefix_2_participant[prefix_curr][peer_curr]
+            affected_participants=sdx_base.prefix_2_policy[prefix_curr][peer_curr]
             if peer_curr in affected_participants:
                 #print "Other affected participants",affected_participants   
                 nparticipant=peer_curr
@@ -132,33 +132,32 @@ def VNH_assignment(jmesg,sdx_base):
                 nparticipant=affected_participants.keys()[0]
                 print nparticipant
                                 
-            policy_curr=prefix_2_participant[prefix_curr][peer_curr][nparticipant] 
-            if policy_curr not in participant_2_VNH[nparticipant]:
-                participant_2_VNH[nparticipant][policy_curr]={}
-            if peer_curr not in participant_2_VNH[nparticipant][policy_curr]:
-                participant_2_VNH[nparticipant][policy_curr][peer_curr]={}  
-            if prefix_curr in participant_2_VNH[nparticipant][policy_curr][peer_curr]:
-                VNH_new=participant_2_VNH[nparticipant][policy_curr][peer_curr][prefix_curr]                
+            policy_curr=sdx_base.prefix_2_policy[prefix_curr][peer_curr][nparticipant] 
+            if policy_curr not in sdx_base.policy_2_VNH[nparticipant]:
+                sdx_base.policy_2_VNH[nparticipant][policy_curr]={}
+            if peer_curr not in sdx_base.policy_2_VNH[nparticipant][policy_curr]:
+                sdx_base.policy_2_VNH[nparticipant][policy_curr][peer_curr]={}  
+            if prefix_curr in sdx_base.policy_2_VNH[nparticipant][policy_curr][peer_curr]:
+                VNH_new=sdx_base.policy_2_VNH[nparticipant][policy_curr][peer_curr][prefix_curr]                
             else:
-                print "ssign a new VNH"
+                print "assign a new VNH"
                 VNH_new=getNew_VNH(nparticipant,policy_curr)
                 
             print "New VNH Assignment: ",VNH_map[VNH_new]            
             # Update the other affected participants
-            print "Update the affected participants"
+            print "Update the affected participants/Prefixes"
             for participant in affected_participants:
                 #if participant !=peer_curr:
                 print participant
-                policy_temp=policy_curr=prefix_2_participant[prefix_curr][peer_curr][participant]
-                prefix_list=policy_prefix_map[participant][policy_temp]
-                if policy_temp not in participant_2_VNH[participant]:
-                    participant_2_VNH[participant][policy_temp]={}
-                if peer_curr not in participant_2_VNH[participant][policy_temp]:
-                    participant_2_VNH[participant][policy_temp][peer_curr]={}
-                    
+                policy_temp=sdx_base.prefix_2_policy[prefix_curr][peer_curr][participant]
+                prefix_list=sdx_base.policy_2_prefix[participant][policy_temp]
+                if policy_temp not in sdx_base.policy_2_VNH[participant]:
+                    sdx_base.policy_2_VNH[participant][policy_temp]={}
+                if peer_curr not in sdx_base.policy_2_VNH[participant][policy_temp]:
+                    sdx_base.policy_2_VNH[participant][policy_temp][peer_curr]={}                   
                 for temp in prefix_list:
-                    participant_2_VNH[participant][policy_temp][peer_curr][temp]=VNH_new
-                print participant_2_VNH
+                    sdx_base.policy_2_VNH[participant][policy_temp][peer_curr][temp]=VNH_new
+                print sdx_base.policy_2_VNH
                             
         else:
             print "There are no policies for updates from this sender"            
@@ -188,8 +187,7 @@ def process_json(message,sdx_base):
 def main(sdx_base):
     message = ''
     print "Quagga Interface Started"
-    for participant in sdx_base.participants:
-        print participant.rib
+    
     # Set up the Server
     HOST,port="localhost",9998
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

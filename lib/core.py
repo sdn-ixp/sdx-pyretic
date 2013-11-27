@@ -48,6 +48,11 @@ from importlib import import_module
 ###
 ### SDX classes
 ###
+prefix_2_participant={'100.0.0.0/16':{'A':['B']},
+                      '120.0.0.0/16':{'B':['A','C']},
+                      '140.0.0.0/16':{'C':['B'],'B':['A']},
+                      '150.0.0.0/16':{'C':['B'],'B':['A']},
+                      }
 
 class SDX(object):
     """Represent a SDX platform configuration"""
@@ -57,26 +62,30 @@ class SDX(object):
         self.participant_id_to_in_var = {}
         self.out_var_to_port = {}
         self.port_id_to_out_var = {}
-    
+        self.policy_2_prefix={}
+        self.prefix_2_policy={}
+        self.prefix_2_participant=prefix_2_participant # This will be later updated from the BGP RIB table
+        self.policy_2_VNH={}
+        
     def get_participantName(self,ip):
         pname=''
-        print self.sdx_ports
-        print ip
+        #print self.sdx_ports
+        #print ip
         for participant_name in self.sdx_ports:
             for port in self.sdx_ports[participant_name]:
-                print port.ip
+                #print port.ip
                 if IP(ip)==port.ip:
-                    print "IP matched"
+                    #print "IP matched"
                     pname=participant_name
                     break
         return pname
     def get_neighborList(self,sname):
-        print type(sname)
+        #print type(sname)
         neighbor_list=[]
         for participant in self.participants:
-            print participant.peers.keys()
+            #print participant.peers.keys()
             if sname in participant.peers.keys():
-                print "Neighbor found",participant.id_
+                #print "Neighbor found",participant.id_
                 neighbor_list.append(participant.id_) 
         return neighbor_list
     
@@ -175,7 +184,7 @@ def sdx_parse_config(config_file):
     sdx = SDX()
     
     sdx_config = json.load(open(config_file, 'r'))
-    print sdx_config
+    #print sdx_config
     sdx_ports = {}
     sdx_vports = {}
     sdx_participants = {}
@@ -188,7 +197,7 @@ def sdx_parse_config(config_file):
         ''' Adding physical ports '''
         participant = sdx_config[participant_name]
         sdx_ports[participant_name] = [PhysicalPort(id_ = participant["Ports"][i]['Id'], mac = MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
-        print sdx_ports[participant_name][0].ip
+        #print sdx_ports[participant_name][0].ip
         ''' Adding virtual port '''
         sdx_vports[participant_name] = VirtualPort() #Check if we need to add a MAC here
     sdx.sdx_ports=sdx_ports   
@@ -207,17 +216,39 @@ def sdx_parse_config(config_file):
     
     return (sdx, sdx_participants)
 
-policy_prefix_map={}
-def is_Active(policy_in,pnum,participant_name):
+
+
+                    
+def get_policy_name(policy_2_prefix,participant,prefix):  
+    policy_name=''
+    for policy in policy_2_prefix[participant]:
+        if prefix in policy_2_prefix[participant][policy]:
+            policy_name=policy
+            break
+    return policy_name
+
+
+def is_Active(policy_in,pnum,participant_name,sdx,prefixes):
     flag_active=True
+    participant_name=participant_name.encode('ascii','ignore')
+    if participant_name not in sdx.policy_2_prefix:
+        sdx.policy_2_prefix[participant_name]={}  
+        sdx.policy_2_VNH[participant_name]={}   
     for temp in policy_in.policies:
         pnum+=1
-        print temp.policies
-        print len(temp.policies)
+        pname='policy'+str(pnum)
+        plist=[]
         for temp2 in temp.policies[0].policies:
-            print temp2
-            print temp2.map
+            if 'dstip' in temp2.map:
+                flag_active=False
+                plist.append(str(temp2.map['dstip']))
+                prefixes[str(temp2.map['dstip'])]=''
+        if flag_active==False:
+            sdx.policy_2_prefix[participant_name][pname]=plist
+            sdx.policy_2_VNH[participant_name][pname]={}
+    #print sdx.policy_2_prefix
     return flag_active
+
 
 def sdx_parse_policies(policy_file, sdx, participants):
     
@@ -227,21 +258,38 @@ def sdx_parse_policies(policy_file, sdx, participants):
         Get participants policies
     '''
     cnt=0
+    prefixes={}
     for participant_name in sdx_policies:
         participant = participants[participant_name]
-        print participant_name
         policy_modules = [import_module(sdx_policies[participant_name][i]) for i in range(0, len(sdx_policies[participant_name]))]
         policy_participant=[]
         for i in range(0,len(sdx_policies[participant_name])):
             pnum=cnt+i*100
             policy_in =policy_modules[i].policy(participant, sdx.fwd)
-            flag_active=is_Active(policy_in,pnum,participant_name)
+            flag_active=is_Active(policy_in,pnum,participant_name,sdx,prefixes)
             if flag_active==True:
                 policy_participant.append(policy_in)
                 
         participant.policies = parallel([policy_participant[i] for i in range(0, len(policy_participant))])
-        print participant.policies
+        #print participant.policies
+    # Now generate the prefix_2_policy from policy_2_prefix
+    for prefix in prefixes:
+        sdx.prefix_2_policy[prefix]={}
+        if prefix not in sdx.prefix_2_participant:
+            print "Error: prefix_2_participant incomplete"
+        else:
+            for announcer in sdx.prefix_2_participant[prefix]:
+                sdx.prefix_2_policy[prefix][announcer]={}
+                for participant in sdx.prefix_2_participant[prefix][announcer]:
+                    policy_name=get_policy_name(sdx.policy_2_prefix,participant,prefix)
+                    sdx.prefix_2_policy[prefix][announcer][participant]=policy_name
+    
+    print "Created relevant Data Structures for VNH Assignments...."
+    print "Policy_2_Prefix: ",sdx.policy_2_prefix
+    print "Policy_2_VNH: ",sdx.policy_2_VNH
+    print "Prefix_2_Policy: ",sdx.prefix_2_policy
 
+    
 def sdx_platform(sdx_config):
     '''
         Defines the SDX platform workflow

@@ -57,7 +57,7 @@ def parse_config(config_file):
         for j in range(0,len(participants[participant_name]["Policy1"])):
             participants[participant_name]["Policy1"][j]=IPPrefix(participants[participant_name]["Policy1"][j])
                 
-    print participants
+    #print participants
     return participants 
 
 
