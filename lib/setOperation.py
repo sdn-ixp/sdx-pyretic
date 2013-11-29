@@ -1,24 +1,8 @@
 #############################################
-# SDX-Quagga Integration                    #
+# Set Operations on IP Prefixes             #
 # author: Arpit Gupta (glex.qsd@gmail.com)  #
 #############################################
 import os,sys
-
-def find_intersection(plist):
-    print "Starting set operations"
-    pmap=map(set,plist)
-    min_set=set.intersection(*pmap)
-    print 'Minimum_Set: ',min_set
-    newlist={}
-    i=0
-    for set_entry in pmap:
-        newlist[i]=[]
-        newlist[i].append(list(min_set))
-        diff= list(set_entry.difference(min_set))
-        if len(diff)>0:
-            newlist[i].append(diff)
-        i+=1
-    return newlist
 
 def decompose_set(tdict):
     pmap=[]
@@ -35,14 +19,8 @@ def decompose_set(tdict):
                     tlist.append(temp)
             tdict[key]=tlist    
     return tdict
-    
-if __name__ == '__main__':
-    
-    pdict={'c1':'','c2':'','c3':''}
-    part_2_prefix={1:[['c3']],2:[['c3','c2'],['c1','c3']],3:[['c1','c2','c3']]}
-    print "initial: ",part_2_prefix
-    #plist=[['c1'],['c1','c2'],['c1','c2','c3']]
 
+def prefix_decompose(pdict,part_2_prefix):
     for key in pdict:
         tempdict={}
         for part in part_2_prefix:
@@ -59,7 +37,19 @@ if __name__ == '__main__':
         for part in decomposed_tempdict:
             for elem in decomposed_tempdict[part]:
                 part_2_prefix[part].append(elem)
-    print "final: ",part_2_prefix
+    return part_2_prefix
+ 
+if __name__ == '__main__':
+    
+    # prefix list
+    pdict={'c1':'','c2':'','c3':''}
+    # prefix mapping
+    part_2_prefix={1:[['c3']],2:[['c3','c2'],['c1','c3']],3:[['c1','c2','c3']]}
+    print "initial: ",part_2_prefix
+    #plist=[['c1'],['c1','c2'],['c1','c2','c3']]
+    part_2_prefix_updated=prefix_decompose(pdict,part_2_prefix)
+    
+    print "final: ",part_2_prefix_updated
         
             
         
