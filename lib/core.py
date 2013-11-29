@@ -54,6 +54,7 @@ prefix_2_participant={'100.0.0.0/16':{'A':['B'],'B':['C']},
                       '150.0.0.0/16':{'C':['B'],'B':['A']},
                       }
 
+
 class SDX(object):
     """Represent a SDX platform configuration"""
     def __init__(self):
