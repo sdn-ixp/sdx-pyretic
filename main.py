@@ -68,6 +68,7 @@ def sdx():
     print "Parsing Participant's policies ..."
     sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
     #print base
+    
     return (sdx_platform(base),base)
 
 ### Main ###
