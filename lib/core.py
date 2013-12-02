@@ -317,6 +317,19 @@ def get_vname(prefix_set,vdict):
             vname=temp    
     return vname
 
+def get_fwdMap(part_2_VNH):
+    fwd_map={}
+    for participant in part_2_VNH:
+        fwd_map[participant]={}
+        for vname,pfx in part_2_VNH[participant].items():
+            for peer in part_2_VNH:
+                if peer!=participant:
+                    for vnm in part_2_VNH[peer]:
+                        if part_2_VNH[peer][vnm]==pfx:
+                            fwd_map[participant][vname]=vnm
+    print "fwd_map: ",fwd_map
+    return fwd_map 
+
 def vnh_assignment(sdx,participants):
     # Step 1:
     # Get the expanded policies from participant's input policies
@@ -429,11 +442,11 @@ def vnh_assignment(sdx,participants):
                         vname=get_vname(prefix_set,part_2_VNH[peer])
                         part_2_VNH[participant][vname]=prefix_set   
     
+    fwd_map=get_fwdMap(part_2_VNH)
     print part_2_VNH
     print VNH_2_IP
     print VNH_2_mac
     #----------------------------------------------------------------------------------------------------#
-    
     
     # Step 5
     # Step 5a: Get expanded policies
@@ -442,22 +455,51 @@ def vnh_assignment(sdx,participants):
         X_policy=participants_policies[participant]
         print "Original policy:", X_policy
         
-        X_expanded = step5a(X_policy, participant,prefixes_announced,participant_list)
-        print "Policy after 5a:", X_expanded
+        X_a = step5a(X_policy, participant,prefixes_announced,participant_list)
+        print "Policy after 5a:\n\n", X_a
         
-        X_final = step5(X_expanded, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
-        print "Policy after Step 5b:", X_final
-        participants_policies[participant]=X_final
+        X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
+        print "Policy after Step 5b:", X_b
+        
+        #X_c = step5c(X_b,participant,participant_list,fwd_map)
+        #print "Policy after Step 5c:\n", X_c
+        
+        
+        
+        participants_policies[participant]=X_b
 
-def get_default_forwarding_policy(best_path,participant,participant_list):
-    #for peer in best_path:
-    policy_ip=parallel([match_prefixes_set(set(best_path[peer]))>>fwd(participant_list[participant][peer]) 
-                        for peer in best_path.keys()]) 
-    #print policy_ip
-    return policy_ip  
 
-def step5(policy, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list):
+def step5c(policy,participant,participant_list,fwd_map):
+    if isinstance(policy, parallel):
+        return parallel(map(lambda p: step5c(p, participant,participant_list,fwd_map), policy.policies))
+    elif isinstance(policy, sequential):
+        return sequential(map(lambda p: step5c(p, participant,participant_list,fwd_map), policy.policies))
+    elif isinstance(policy, if_):
+        print 'pred',policy.pred,
+        print 'f_branch',policy.f_branch
+        print 't_branch',policy.t_branch
+        return if_(step5c(policy.pred, participant,participant_list,fwd_map), 
+                   step5c(policy.t_branch, participant,participant_list,fwd_map), 
+                   step5c(policy.f_branch, participant,participant_list,fwd_map))
+    else:
+        # Base call
+        if isinstance(policy, fwd):
+            peer=get_peerName(policy.outport,participant_list[participant])
+            print peer
+            if peer!=participant:
+                new_pol=modify
+            
+            
+def get_peerName(port,p_list):
+    for peer in p_list:
+        if port in p_list[peer]:
+            return peer
+    return ''
+ 
+
+def step5b(policy, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list):
     expanded_vnhop_policy = step5b_expand_policy_with_vnhop(policy, participant,part_2_VNH,VNH_2_mac)
+    
     policy_matches = extract_all_matches_from_policy(expanded_vnhop_policy)
     if participant in best_paths:
         #print 'BIG Match: ',policy_matches
@@ -466,6 +508,8 @@ def step5(policy, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list):
         return if_(policy_matches, expanded_vnhop_policy, bgp)
     else:
         return expanded_vnhop_policy
+    
+    
     #return expanded_vnhop_policy
     
 def step5b_expand_policy_with_vnhop(policy, participant_id,part_2_VNH,VNH_2_mac, acc=[]):
@@ -473,10 +517,12 @@ def step5b_expand_policy_with_vnhop(policy, participant_id,part_2_VNH,VNH_2_mac,
     if isinstance(policy, parallel):
         return parallel(map(lambda p: step5b_expand_policy_with_vnhop(p, participant_id,part_2_VNH,VNH_2_mac), policy.policies))
     elif isinstance(policy, sequential):
-        a = []
-        return sequential(map(lambda p: step5b_expand_policy_with_vnhop(p, participant_id,part_2_VNH,VNH_2_mac, a), policy.policies))
+        acc = []
+        return sequential(map(lambda p: step5b_expand_policy_with_vnhop(p, participant_id,part_2_VNH,VNH_2_mac, acc), policy.policies))
     elif isinstance(policy, if_):
-        return if_(step5b_expand_policy_with_vnhop(policy.pred, participant_id,part_2_VNH,VNH_2_mac), step5b_expand_policy_with_vnhop(policy.t_branch, participant_id,part_2_VNH,VNH_2_mac), step5b_expand_policy_with_vnhop(policy.f_branch, participant_id,part_2_VNH,VNH_2_mac))
+        return if_(step5b_expand_policy_with_vnhop(policy.pred, participant_id,part_2_VNH,VNH_2_mac), 
+                   step5b_expand_policy_with_vnhop(policy.t_branch, participant_id,part_2_VNH,VNH_2_mac), 
+                   step5b_expand_policy_with_vnhop(policy.f_branch, participant_id,part_2_VNH,VNH_2_mac))
     else:
         # Base call
         if isinstance(policy, match_prefixes_set):            
@@ -485,14 +531,31 @@ def step5b_expand_policy_with_vnhop(policy, participant_id,part_2_VNH,VNH_2_mac,
                 vnhop = return_vnhop(part_2_VNH[participant_id],VNH_2_mac, pfx)
                 unique_vnhops.add(vnhop)
             #print unique_vnhops
-            match_vnhops=match(dst_mac=unique_vnhops.pop())
+            acc=list(unique_vnhops)
+            match_vnhops=match(dstmac=unique_vnhops.pop())
             for vnhop in unique_vnhops:
-                match_vnhops = match_vnhops | match(dstmac=vnhop)
-            #print match_vnhops
+                match_vnhops = match_vnhops + match(dstmac=vnhop)
+            #print match_vnhops           
+            print 'acc1: ',acc
+            print policy           
             return match_vnhops
+        
+        elif isinstance(policy, fwd):
+            print 'acc: ',acc
+            print 'policy: ',policy
+            if len(list(acc)):
+                print 'a: ',acc
             
-            print policy
+        
+        
         return policy
+
+def get_default_forwarding_policy(best_path,participant,participant_list):
+    #for peer in best_path:
+    policy_ip=parallel([match_prefixes_set(set(best_path[peer]))>>fwd(participant_list[participant][peer][0]) 
+                        for peer in best_path.keys()]) 
+    #print policy_ip
+    return policy_ip 
 
 def return_vnhop(vnh_2_prefix,VNH_2_mac, pfx):
     vnhop=EthAddr('A1:A1:A1:A1:A1:A1')
@@ -518,7 +581,9 @@ def step5a_expand_policy_with_prefixes(policy, participant, pa, plist,acc=[]):
         acc = []
         return sequential(map(lambda p: step5a_expand_policy_with_prefixes(p, participant,pa, plist,acc), policy.policies))
     elif isinstance(policy, if_):
-        return if_(step5a_expand_policy_with_prefixes(policy.pred, participant,pa,plist), step5a_expand_policy_with_prefixes(policy.t_branch, participant,pa,plist), step5a_expand_policy_with_prefixes(policy.f_branch, participant,pa,plist))
+        return if_(step5a_expand_policy_with_prefixes(policy.pred, participant,pa,plist), 
+                   step5a_expand_policy_with_prefixes(policy.t_branch, participant,pa,plist), 
+                   step5a_expand_policy_with_prefixes(policy.f_branch, participant,pa,plist))
     else:
         # Base call
         if isinstance(policy, match):
