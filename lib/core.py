@@ -40,11 +40,12 @@ from pyretic.lib.std import *
 
 ## SDX-specific imports
 from pyretic.sdx.lib.common import *
+from pyretic.sdx.lib.setOperation import *
 
 ## General imports
 import json
 from importlib import import_module
-
+from ipaddr import IPv4Network
 ###
 ### SDX classes
 ###
@@ -53,6 +54,7 @@ prefix_2_participant={'100.0.0.0/16':{'A':['B'],'B':['C']},
                       '140.0.0.0/16':{'C':['B'],'B':['A']},
                       '150.0.0.0/16':{'C':['B'],'B':['A']},
                       }
+
 
 class SDX(object):
     """Represent a SDX platform configuration"""
@@ -249,11 +251,83 @@ def is_Active(policy_in,pnum,participant_name,sdx,prefixes):
     #print sdx.policy_2_prefix
     return flag_active
 
+def vnh_assignment(sdx,participants):
+    # Step 1:
+    # Get the expanded policies from participant's input policies
+    # Prefixes:
+    VNH_map={'VNHB':'172.0.0.201','VNHC':'172.0.0.301','VNHA':'172.0.0.101'}
+    prefixes={'p1':IPv4Network('11.0.0.0/24'),
+              'p2':IPv4Network('12.0.0.0/24'),
+              'p3':IPv4Network('13.0.0.0/24'),
+              'p4':IPv4Network('14.0.0.0/24'),
+              'p5':IPv4Network('15.0.0.0/24'),
+              'p6':IPv4Network('16.0.0.0/24')
+              }
+    participants={'A':1,'B':2,'C':3,'D':4}
+    
+    PB=['p1','p2','p3','p4','p6']
+    PC=['p3','p4','p5','p6']
+    PD=['p1','p2','p3','p4','p5','p6']
+    # Set of prefixes for A's best paths
+    PA1=['p1','p2','p3']
+    PA2=['p4','p5','p6']
+    best_paths={'A':{'D':PA1,'C':PA2}}
+    
+    # Step 2 & 3
+    participant_2_prefix={'A':[PB,PC,PA1,PA2],'B':[PB,['p1'],['p4']],'C':[PC],'D':[PD]}
+    print 'Before Set operations: ',participant_2_prefix
+    part_2_prefix_updated=prefix_decompose(prefixes,participant_2_prefix)
+    print 'After Set operations: ',part_2_prefix_updated
+    
+    # Step 4: Assign VNHs
+    part_2_VNH={}
+    for participant in part_2_prefix_updated:
+        part_2_VNH[participant]={}
+        count=1
+        for prefix_set in part_2_prefix_updated[participant]:
+            if participant not in best_paths:
+                vname='VNH'+participant+str(count)
+                base='VNH'+participant
+                if vname not in VNH_map:
+                    # Need to update the VNH_map
+                    if base in VNH_map:
+                        last=int(VNH_map[base].split('.')[3])
+                        nlast=last+count*10            
+                        new_ip=VNH_map[base].split(str(last))[0]+str(nlast)        
+                        VNH_map[vname]=new_ip
+                part_2_VNH[participant][vname]=prefix_set
+                count+=1
+    print part_2_VNH
+    for participant in part_2_prefix_updated:        
+        for prefix_set in part_2_prefix_updated[participant]:
+            if participant in best_paths:
+                print participant
+                for peer in best_paths[participant]:
+                    print prefix_set,best_paths[participant][peer]
+                    if set(prefix_set) in set(best_paths[participant][peer]):
+                        
+                        vname=get_vname(prefix_set,part_2_VNH[peer])
+                        print vname
+                        part_2_VNH[participant][vname]=prefix_set
+                    
 
+    print part_2_VNH
+    print VNH_map
+
+def get_vname(prefix_set,vdict):
+    vname=''
+    for temp in vdict:
+        if set(prefix_set) in set(vdict[temp]):
+            vname=temp    
+    return vname
+    
 def sdx_parse_policies(policy_file, sdx, participants):
+
+    vnh_assignment(sdx,participants)
     
+    """
     sdx_policies = json.load(open(policy_file, 'r'))
-    
+     
     ''' 
         Get participants policies
     '''
@@ -267,11 +341,15 @@ def sdx_parse_policies(policy_file, sdx, participants):
             pnum=cnt+i*100
             policy_in =policy_modules[i].policy(participant, sdx.fwd)
             flag_active=is_Active(policy_in,pnum,participant_name,sdx,prefixes)
-            if flag_active==True:
-                policy_participant.append(policy_in)
-                
+            #if flag_active==True:
+            policy_participant.append(policy_in)
+                 
         participant.policies = parallel([policy_participant[i] for i in range(0, len(policy_participant))])
-        #print participant.policies
+        print participant.policies
+        
+
+    
+    # Older logic, might be useful in parts later
     # Now generate the prefix_2_policy from policy_2_prefix
     print prefixes
     for prefix in prefixes:
@@ -285,16 +363,17 @@ def sdx_parse_policies(policy_file, sdx, participants):
                     policy_name=get_policy_name(sdx.policy_2_prefix,participant,prefix)
                     if policy_name!='':
                         sdx.prefix_2_policy[prefix][announcer][participant]=policy_name
-                    
+                     
                 # Check for announcer's policy for its advertised prefixes
                 policy_name=get_policy_name(sdx.policy_2_prefix,announcer,prefix)
                 if policy_name!='':
                     sdx.prefix_2_policy[prefix][announcer][announcer]=policy_name
-    
+     
     print "Created relevant Data Structures for VNH Assignments...."
     print "Policy_2_Prefix: ",sdx.policy_2_prefix
     print "Policy_2_VNH: ",sdx.policy_2_VNH
     print "Prefix_2_Policy: ",sdx.prefix_2_policy
+    """
 
     
 def sdx_platform(sdx_config):
