@@ -1,14 +1,26 @@
 # Author: Laurent Vanbever (vanbever@cs.princeton.edu)
 # Create date: December, 2
 
+## Pyretic-specific imports
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
+
+## SDX-specific imports
+from pyretic.sdx.lib.language import *
+
+## Generic imports
 from ipaddr import IPv4Network
 
 A_policy = (
             (match(dstport=80) >> fwd(2)) +
             (match(dstport=6666) >> fwd(3))
          )
+
+
+B_policy = (
+            (match_prefixes_set({IPv4Network('10.0.0.0/8'), IPv4Network('11.0.0.0/8')}) >> match(dstport=80) >> fwd(2)) +
+            (match_prefixes_set({IPv4Network('11.0.0.0/8'), IPv4Network('12.0.0.0/8')}) >> match(dstport=6666) >> fwd(3))
+)
 
 A_expanded = (
             (match(dstip=IPAddr('11.0.0.1')) >> match(dstport=80) >> fwd(2)) +
@@ -96,6 +108,7 @@ def expanded_policy_to_vnhop_policy(policy, participant_id, bgp_neighbor=[]):
         return policy
 
 def main():
-    print A_expanded
-    print "rewritten: ", expanded_policy_to_vnhop_policy(A_expanded, 1)
+    #print A_expanded
+    #print "rewritten: ", expanded_policy_to_vnhop_policy(A_expanded, 1)
+    print B_policy
     return expanded_policy_to_vnhop_policy(A_expanded, 1)
