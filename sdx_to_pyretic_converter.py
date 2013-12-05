@@ -39,32 +39,32 @@ participants_announcements = {
 
 prefix_to_vnhop_assigned = {
     1 : {
-        IPv4Network('11.0.0.0/24') : EthAddr('A1:A1:A1:A1:A1:A1'),
-        IPv4Network('12.0.0.0/24') : EthAddr('B1:B1:B1:B1:B1:B1'),
-        IPv4Network('13.0.0.0/24') : EthAddr('C1:C1:C1:C1:C1:C1'),
-        IPv4Network('14.0.0.0/24') : EthAddr('D1:D1:D1:D1:D1:D1')
+        IPv4Network('11.0.0.0/8') : EthAddr('A1:A1:A1:A1:A1:A1'),
+        IPv4Network('12.0.0.0/8') : EthAddr('B1:B1:B1:B1:B1:B1'),
+        IPv4Network('13.0.0.0/8') : EthAddr('C1:C1:C1:C1:C1:C1'),
+        IPv4Network('14.0.0.0/8') : EthAddr('D1:D1:D1:D1:D1:D1')
     },
     2 : {
-        IPv4Network('11.0.0.0/24') : EthAddr('A2:A2:A2:A2:A2:A2'),
-        IPv4Network('12.0.0.0/24') : EthAddr('B2:B2:B2:B2:B2:B2'),
-        IPv4Network('13.0.0.0/24') : EthAddr('C2:C2:C2:C2:C2:C2'),
-        IPv4Network('14.0.0.0/24') : EthAddr('D2:D2:D2:D2:D2:D2')
+        IPv4Network('11.0.0.0/8') : EthAddr('A2:A2:A2:A2:A2:A2'),
+        IPv4Network('12.0.0.0/8') : EthAddr('B2:B2:B2:B2:B2:B2'),
+        IPv4Network('13.0.0.0/8') : EthAddr('C2:C2:C2:C2:C2:C2'),
+        IPv4Network('14.0.0.0/8') : EthAddr('D2:D2:D2:D2:D2:D2')
     },
     3 : {
-        IPv4Network('11.0.0.0/24') : EthAddr('A3:A3:A3:A3:A3:A3'),
-        IPv4Network('12.0.0.0/24') : EthAddr('B3:B3:B3:B3:B3:B3'),
-        IPv4Network('13.0.0.0/24') : EthAddr('C3:C3:C3:C3:C3:C3'),
-        IPv4Network('14.0.0.0/24') : EthAddr('D3:D3:D3:D3:D3:D3')
+        IPv4Network('11.0.0.0/8') : EthAddr('A3:A3:A3:A3:A3:A3'),
+        IPv4Network('12.0.0.0/8') : EthAddr('B3:B3:B3:B3:B3:B3'),
+        IPv4Network('13.0.0.0/8') : EthAddr('C3:C3:C3:C3:C3:C3'),
+        IPv4Network('14.0.0.0/8') : EthAddr('D3:D3:D3:D3:D3:D3')
     }
 }
 
 # Warning: must be ordered by prefix-length, with shorter prefix before
 participant_to_ebgp_nh_received = {
     1 : {
-        IPv4Network('11.0.0.0/24') : 3,
-        IPv4Network('12.0.0.0/24') : 2,
-        IPv4Network('13.0.0.0/24') : 3,
-        IPv4Network('14.0.0.0/24') : 2,
+        IPv4Network('11.0.0.0/8') : 3,
+        IPv4Network('12.0.0.0/8') : 2,
+        IPv4Network('13.0.0.0/8') : 3,
+        IPv4Network('14.0.0.0/8') : 2,
     }
 }
 
@@ -83,13 +83,13 @@ def return_ebgp_nh(prefix, participant_id):
         if IPv4Network(prefix.__repr__()) in candidate_prefix:
             return prefix_received_to_participant[participant_id][candidate_prefix]
 
-def return_vnhop(prefix, participant_id):
+def return_vnhop(participant_id, prefix):
     global prefix_to_vnhop_assigned
     
-    for candidate_prefix in prefix_to_vnhop_assigned[participant_id]:
-        if IPv4Network(prefix.__repr__()) in candidate_prefix:
-            return prefix_to_vnhop_assigned[participant_id][candidate_prefix]
-
+    for prefix in prefix_to_vnhop_assigned[participant_id]:
+        return prefix_to_vnhop_assigned[participant_id][prefix]
+    else:
+        raise Exception("Prefix %s is not announced to participant %s" % (prefix, participant_id))
 
 ##
 ## Compilation stages
@@ -141,7 +141,7 @@ def extract_all_matches_from_policy(policy, acc=[]):
             p = p & extract_all_matches_from_policy(sub_policy);
         return p
     elif isinstance(policy, if_):
-        print "Error: Not supported right now"
+        raise NotImplementedError("Compilation of if_ policy is currently not supported")
         sys.exit(-1)
     else:
         # Base call
@@ -151,45 +151,42 @@ def extract_all_matches_from_policy(policy, acc=[]):
             return policy
 
 def step5(policy, participant_id):
-    policy_matches = extract_all_matches_from_policy(policy)
     expanded_vnhop_policy = step5a_expand_policy_with_vnhop(policy, participant_id)
+    policy_matches = extract_all_matches_from_policy(expanded_vnhop_policy)
     bgp = get_default_forwarding_policy(participant_id)
         
-    return if_(policy_matches)(expanded_vnhop_policy)(bgp)
+    return if_(policy_matches, expanded_vnhop_policy, bgp)
 
 def step5a_expand_policy_with_vnhop(policy, participant_id, acc=[]):
     # Recursive call
     if isinstance(policy, parallel):
-        return parallel(map(lambda p: step5_expand_policy_with_vnhop(p, participant_id), policy.policies))
+        return parallel(map(lambda p: step5a_expand_policy_with_vnhop(p, participant_id), policy.policies))
     elif isinstance(policy, sequential):
         a = []
-        return sequential(map(lambda p: step5_expand_policy_with_vnhop(p, participant_id, a), policy.policies))
+        return sequential(map(lambda p: step5a_expand_policy_with_vnhop(p, participant_id, a), policy.policies))
     elif isinstance(policy, if_):
-        return if_(step5_expand_policy_with_vnhop(policy.pred, participant_id), step5_expand_policy_with_vnhop(policy.t_branch, participant_id), step5_expand_policy_with_vnhop(policy.f_branch, participant_id))
+        return if_(step5a_expand_policy_with_vnhop(policy.pred, participant_id), step5a_expand_policy_with_vnhop(policy.t_branch, participant_id), step5a_expand_policy_with_vnhop(policy.f_branch, participant_id))
     else:
         # Base call
-        if isinstance(policy, match):
-            if 'dstip' in policy.map:
-                pfx = policy.map['dstip']
-                ebgp_nh = return_ebgp_nh(pfx, participant_id)
-                acc.append((pfx, ebgp_nh))
-                vnhop = return_vnhop(pfx, ebgp_nh)
-                return match({'dstmac':vnhop})
-        elif isinstance(policy, fwd):
-            if policy.outport not in [ebgp_nh for (pfx, ebgp_nh) in acc]:
-                return modify({'dstmac': return_vnhop(acc[0][0], policy.outport)}) >> policy
+        if isinstance(policy, match_prefixes_set):
+            match_vnhops = match()
+            unique_vnhops = set()
+            for pfx in policy.pfxes:
+                vnhop = return_vnhop(participant_id, pfx)
+                unique_vnhops.add(vnhop)
+            match_vnhops = match(dst_mac=unique_vnhops.pop())
+            for vnhop in unique_vnhops:
+                match_vnhops = match_vnhops | match(dstmac=vnhop)
+            return match_vnhops
         return policy
-
 
 def main():
     print "Original policy:", A_policy
     
     A_expanded = step1(A_policy, 1)
-    print "Step 1:", A_expanded
+    print "Policy after Step 1:", A_expanded
     
-    print "Pouet", extract_all_matches_from_policy(A_policy)
-    
-    #A_vnhop = step5_expand_policy_with_vnhop(A_expanded, 1)
-    #print "Step 5:", A_vnhop
+    A_final = step5(A_expanded, 1)
+    print "Policy after Step 5:", A_final
     
     return flood()
