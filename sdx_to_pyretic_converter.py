@@ -86,7 +86,7 @@ def return_ebgp_nh(prefix, participant_id):
 def return_vnhop(participant_id, prefix):
     global prefix_to_vnhop_assigned
     
-    for prefix in prefix_to_vnhop_assigned[participant_id]:
+    if prefix in prefix_to_vnhop_assigned[participant_id]:
         return prefix_to_vnhop_assigned[participant_id][prefix]
     else:
         raise Exception("Prefix %s is not announced to participant %s" % (prefix, participant_id))
@@ -190,3 +190,4 @@ def main():
     print "Policy after Step 5:", A_final
     
     return flood()
+
