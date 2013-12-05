@@ -17,7 +17,7 @@ from ipaddr import IPv4Network
 A_policy = (
             (match(dstport=80) >> match(srcport=22) >> fwd(2)) +
             (match(dstport=6666) >> fwd(3)) +
-            (match(dstip=IPPrefix('11.0.0.0/8')) >> fwd(2))
+            (match_prefixes_set({IPv4Network('11.0.0.0/8')}) >> fwd(2))
          )
 ##
 ## Data structures. Eventually, will be filled dynamically trough ExaBGP
