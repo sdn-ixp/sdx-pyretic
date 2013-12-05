@@ -7,7 +7,11 @@ class match_prefixes_set(DerivedPolicy, Filter):
     """ SDX utilities. Maintain a set of IP prefixes.
         Only useful in the first stages of the SDX compilation."""
     def __init__(self, pfxes):
-        self.pfxes = pfxes
+        
+        if isinstance(pfxes, set):
+            self.pfxes = pfxes
+        else:
+            self.pfxes = set(pfxes)
         super(match_prefixes_set, self).__init__(passthrough)
     
     def __repr__(self):

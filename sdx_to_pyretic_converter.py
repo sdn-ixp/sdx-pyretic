@@ -11,31 +11,31 @@ from pyretic.sdx.lib.language import *
 ## Generic imports
 from ipaddr import IPv4Network
 
+##
+## SDX high-level policy, written by the participant
+##
 A_policy = (
-            (match(dstport=80) >> fwd(2)) +
-            (match(dstport=6666) >> fwd(3))
+            (match(dstport=80) >> match(srcport=22) >> fwd(2)) +
+            (match(dstport=6666) >> fwd(3)) +
+            (match(dstip=IPPrefix('11.0.0.0/8')) >> fwd(2))
          )
-
-
-B_policy = (
-            (match_prefixes_set({IPv4Network('10.0.0.0/8'), IPv4Network('11.0.0.0/8')}) >> match(dstport=80) >> fwd(2)) +
-            (match_prefixes_set({IPv4Network('11.0.0.0/8'), IPv4Network('12.0.0.0/8')}) >> match(dstport=6666) >> fwd(3))
-)
-
-A_expanded = (
-            (match(dstip=IPAddr('11.0.0.1')) >> match(dstport=80) >> fwd(2)) +
-            (match(dstip=IPAddr('12.0.0.1')) >> match(dstport=80) >> fwd(2)) +
-            (match(dstip=IPAddr('14.0.0.1')) >> match(dstport=80) >> fwd(2)) +
-            
-            (match(dstip=IPAddr('11.0.0.1')) >> match(dstport=6666) >> fwd(3)) +
-            (match(dstip=IPAddr('12.0.0.1')) >> match(dstport=6666) >> fwd(3)) +
-            (match(dstip=IPAddr('13.0.0.1')) >> match(dstport=6666) >> fwd(3)) +
-            
-            (match(dstip=IPAddr('11.0.0.1')) >> fwd(3)) +
-            (match(dstip=IPAddr('12.0.0.1')) >> fwd(2)) +
-            (match(dstip=IPAddr('13.0.0.1')) >> fwd(3)) +
-            (match(dstip=IPAddr('14.0.0.1')) >> fwd(2))
-          )
+##
+## Data structures. Eventually, will be filled dynamically trough ExaBGP
+##
+participants_announcements = {
+    1 : {
+        2 : [
+                IPv4Network('11.0.0.0/8'),
+                IPv4Network('12.0.0.0/8'),
+                IPv4Network('14.0.0.0/8')
+            ],
+        3 : [
+                IPv4Network('11.0.0.0/8'),
+                IPv4Network('12.0.0.0/8'),
+                IPv4Network('13.0.0.0/8')
+            ]
+    }
+}
 
 prefix_to_vnhop_assigned = {
     1 : {
@@ -59,7 +59,7 @@ prefix_to_vnhop_assigned = {
 }
 
 # Warning: must be ordered by prefix-length, with shorter prefix before
-prefix_received_to_participant = {
+participant_to_ebgp_nh_received = {
     1 : {
         IPv4Network('11.0.0.0/24') : 3,
         IPv4Network('12.0.0.0/24') : 2,
@@ -67,6 +67,12 @@ prefix_received_to_participant = {
         IPv4Network('14.0.0.0/24') : 2,
     }
 }
+
+
+##
+## Acces methods to data structures
+##
+
 
 # Warning: Linear Search. Inefficient and incorrect as we need to do longuest-match.
 # Change to a binary tree.
@@ -84,31 +90,97 @@ def return_vnhop(prefix, participant_id):
         if IPv4Network(prefix.__repr__()) in candidate_prefix:
             return prefix_to_vnhop_assigned[participant_id][candidate_prefix]
 
-def expanded_policy_to_vnhop_policy(policy, participant_id, bgp_neighbor=[]):
+
+##
+## Compilation stages
+##
+
+def step1(policy, participant_id, include_default_policy=True):
+    p1 = step1a_expand_policy_with_prefixes(policy, participant_id)
+    if include_default_policy:
+        p1 = p1 >> get_default_forwarding_policy(participant_id)
+    return p1
+
+def step1a_expand_policy_with_prefixes(policy, participant_id, acc=[]):
+    global participants_announcements
+    
     # Recursive call
     if isinstance(policy, parallel):
-        return parallel(map(lambda p: expanded_policy_to_vnhop_policy(p, participant_id), policy.policies))
+        return parallel(map(lambda p: step1a_expand_policy_with_prefixes(p, participant_id), policy.policies))
+    elif isinstance(policy, sequential):
+        acc = []
+        return sequential(map(lambda p: step1a_expand_policy_with_prefixes(p, participant_id, acc), policy.policies))
+    elif isinstance(policy, if_):
+        return if_(step1a_expand_policy_with_prefixes(policy.pred, participant_id), step1a_expand_policy_with_prefixes(policy.t_branch, participant_id), step1a_expand_policy_with_prefixes(policy.f_branch, participant_id))
+    else:
+        # Base call
+        if isinstance(policy, match):
+            if 'dstip' in policy.map:
+                acc.append('dstip')
+        elif isinstance(policy, fwd):
+            if 'dstip' not in acc:    
+                return match_prefixes_set(participants_announcements[participant_id][policy.outport]) >> policy
+        return policy
+
+def get_default_forwarding_policy(participant_id):
+    global participant_to_ebgp_nh_received
+    return parallel([match(dstip=IPPrefix(str(pfx))) >> fwd(nh) for (pfx, nh) in participant_to_ebgp_nh_received[participant_id].items()])
+
+def extract_all_matches_from_policy(policy, acc=[]):
+    # Recursive call
+    if isinstance(policy, parallel):
+        p = extract_all_matches_from_policy(policy.policies[0])
+        for sub_policy in policy.policies[1:]:
+            p = p | extract_all_matches_from_policy(sub_policy);
+        return p
+    elif isinstance(policy, sequential):
+        p = extract_all_matches_from_policy(policy.policies[0])
+        for sub_policy in policy.policies[1:]:
+            p = p & extract_all_matches_from_policy(sub_policy);
+        return p
+    elif isinstance(policy, if_):
+        print "Error: Not supported right now"
+        sys.exit(-1)
+    else:
+        # Base call
+        if isinstance(policy, fwd):
+            return match()
+        else:
+            return policy
+
+def step5_expand_policy_with_vnhop(policy, participant_id, acc=[]):
+    # Recursive call
+    if isinstance(policy, parallel):
+        return parallel(map(lambda p: step5_expand_policy_with_vnhop(p, participant_id), policy.policies))
     elif isinstance(policy, sequential):
         a = []
-        return sequential(map(lambda p: expanded_policy_to_vnhop_policy(p, participant_id, a), policy.policies))
+        return sequential(map(lambda p: step5_expand_policy_with_vnhop(p, participant_id, a), policy.policies))
     elif isinstance(policy, if_):
-        return if_(expanded_policy_to_vnhop_policy(policy.pred, participant_id), expanded_policy_to_vnhop_policy(policy.t_branch, participant_id), expanded_policy_to_vnhop_policy(policy.f_branch, participant_id))
+        return if_(step5_expand_policy_with_vnhop(policy.pred, participant_id), step5_expand_policy_with_vnhop(policy.t_branch, participant_id), step5_expand_policy_with_vnhop(policy.f_branch, participant_id))
     else:
         # Base call
         if isinstance(policy, match):
             if 'dstip' in policy.map:
                 pfx = policy.map['dstip']
                 ebgp_nh = return_ebgp_nh(pfx, participant_id)
-                bgp_neighbor.append((pfx, ebgp_nh))
+                acc.append((pfx, ebgp_nh))
                 vnhop = return_vnhop(pfx, ebgp_nh)
                 return match({'dstmac':vnhop})
         elif isinstance(policy, fwd):
-            if policy.outport not in [ebgp_nh for (pfx, ebgp_nh) in bgp_neighbor]:
-                return modify({'dstmac': return_vnhop(bgp_neighbor[0][0], policy.outport)}) >> policy
+            if policy.outport not in [ebgp_nh for (pfx, ebgp_nh) in acc]:
+                return modify({'dstmac': return_vnhop(acc[0][0], policy.outport)}) >> policy
         return policy
 
+
 def main():
-    #print A_expanded
-    #print "rewritten: ", expanded_policy_to_vnhop_policy(A_expanded, 1)
-    print B_policy
-    return expanded_policy_to_vnhop_policy(A_expanded, 1)
+    print "Original policy:", A_policy
+    
+    A_expanded = step1(A_policy, 1)
+    print "Step 1:", A_expanded
+    
+    print "Pouet", extract_all_matches_from_policy(A_policy)
+    
+    #A_vnhop = step5_expand_policy_with_vnhop(A_expanded, 1)
+    #print "Step 5:", A_vnhop
+    
+    return flood()
