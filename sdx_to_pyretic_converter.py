@@ -95,7 +95,7 @@ def return_vnhop(prefix, participant_id):
 ## Compilation stages
 ##
 
-def step1(policy, participant_id, include_default_policy=True):
+def step1(policy, participant_id, include_default_policy=False):
     p1 = step1a_expand_policy_with_prefixes(policy, participant_id)
     if include_default_policy:
         p1 = p1 >> get_default_forwarding_policy(participant_id)
@@ -150,7 +150,14 @@ def extract_all_matches_from_policy(policy, acc=[]):
         else:
             return policy
 
-def step5_expand_policy_with_vnhop(policy, participant_id, acc=[]):
+def step5(policy, participant_id):
+    policy_matches = extract_all_matches_from_policy(policy)
+    expanded_vnhop_policy = step5a_expand_policy_with_vnhop(policy, participant_id)
+    bgp = get_default_forwarding_policy(participant_id)
+        
+    return if_(policy_matches)(expanded_vnhop_policy)(bgp)
+
+def step5a_expand_policy_with_vnhop(policy, participant_id, acc=[]):
     # Recursive call
     if isinstance(policy, parallel):
         return parallel(map(lambda p: step5_expand_policy_with_vnhop(p, participant_id), policy.policies))
