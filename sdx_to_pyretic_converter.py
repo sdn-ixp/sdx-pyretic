@@ -117,6 +117,8 @@ def step1a_expand_policy_with_prefixes(policy, participant_id, acc=[]):
         if isinstance(policy, match):
             if 'dstip' in policy.map:
                 acc.append('dstip')
+        elif isinstance(policy, match_prefixes_set):
+            acc.append('dstip')
         elif isinstance(policy, fwd):
             if 'dstip' not in acc:    
                 return match_prefixes_set(participants_announcements[participant_id][policy.outport]) >> policy
