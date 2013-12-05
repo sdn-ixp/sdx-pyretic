@@ -133,12 +133,16 @@ def extract_all_matches_from_policy(policy, acc=[]):
     if isinstance(policy, parallel):
         p = extract_all_matches_from_policy(policy.policies[0])
         for sub_policy in policy.policies[1:]:
-            p = p | extract_all_matches_from_policy(sub_policy);
+            ans = extract_all_matches_from_policy(sub_policy)
+            if ans:
+                p = p | extract_all_matches_from_policy(sub_policy)
         return p
     elif isinstance(policy, sequential):
         p = extract_all_matches_from_policy(policy.policies[0])
         for sub_policy in policy.policies[1:]:
-            p = p & extract_all_matches_from_policy(sub_policy);
+            ans = extract_all_matches_from_policy(sub_policy)
+            if ans:
+                p = p & extract_all_matches_from_policy(sub_policy)
         return p
     elif isinstance(policy, if_):
         raise NotImplementedError("Compilation of if_ policy is currently not supported")
@@ -146,7 +150,7 @@ def extract_all_matches_from_policy(policy, acc=[]):
     else:
         # Base call
         if isinstance(policy, fwd):
-            return match()
+            return None
         else:
             return policy
 
