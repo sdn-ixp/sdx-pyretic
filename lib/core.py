@@ -281,6 +281,8 @@ def vnh_assignment(sdx,participants):
     
     # Step 4: Assign VNHs
     part_2_VNH={}
+    
+    # deal with folks with inbound policies
     for participant in part_2_prefix_updated:
         part_2_VNH[participant]={}
         count=1
@@ -298,18 +300,16 @@ def vnh_assignment(sdx,participants):
                 part_2_VNH[participant][vname]=prefix_set
                 count+=1
     print part_2_VNH
+    # Now deal with folks with outbound policies
     for participant in part_2_prefix_updated:        
         for prefix_set in part_2_prefix_updated[participant]:
             if participant in best_paths:
-                print participant
                 for peer in best_paths[participant]:
-                    print prefix_set,best_paths[participant][peer]
-                    if set(prefix_set) in set(best_paths[participant][peer]):
-                        
+                    if len(list(set(best_paths[participant][peer]).intersection(set(prefix_set))))>0:
                         vname=get_vname(prefix_set,part_2_VNH[peer])
-                        print vname
                         part_2_VNH[participant][vname]=prefix_set
                     
+    # Step 5
 
     print part_2_VNH
     print VNH_map
@@ -317,7 +317,7 @@ def vnh_assignment(sdx,participants):
 def get_vname(prefix_set,vdict):
     vname=''
     for temp in vdict:
-        if set(prefix_set) in set(vdict[temp]):
+        if len(list(set(vdict[temp]).intersection(set(prefix_set))))>0:
             vname=temp    
     return vname
     
