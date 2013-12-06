@@ -486,9 +486,12 @@ def step5c(policy, participant, participant_list, port_2_participant, fwd_map):
     
     for neighbor in fwd_neighbors:
         if neighbor != participant:
-            p = match()
+            p = None
             for (a,b) in fwd_map[participant][neighbor].items():
-                p = p + (match(dstmac=a) >> modify(dstmac=b))
+                if not p:
+                    p = (match(dstmac=a) >> modify(dstmac=b))
+                else:
+                    p = p + (match(dstmac=a) >> modify(dstmac=b))
             if rewrite_policy:
                 rewrite_policy += match(outport=participant_list[participant][neighbor]) >> (p)
             else:
