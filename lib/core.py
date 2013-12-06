@@ -474,12 +474,12 @@ def vnh_assignment(sdx,participants):
         X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
         print "Policy after Step 5b:", X_b
         
-        X_c = step5c(X_b, participant, participant_list, port_2_participant, fwd_map)
+        X_c = step5c(X_b, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac)
         print "Policy after Step 5c:\n", (X_b >> X_c)
         
         participants_policies[participant]= (X_b >> X_c)
         
-def step5c(policy, participant, participant_list, port_2_participant, fwd_map):
+def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac):
     fwd_neighbors = [port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)]
     
     rewrite_policy = None
@@ -489,13 +489,13 @@ def step5c(policy, participant, participant_list, port_2_participant, fwd_map):
             p = None
             for (a,b) in fwd_map[participant][neighbor].items():
                 if not p:
-                    p = (match(dstmac=a) >> modify(dstmac=b))
+                    p = (match(dstmac=VNH_2_mac[a]) >> modify(dstmac=VNH_2_mac[b]))
                 else:
-                    p = p + (match(dstmac=a) >> modify(dstmac=b))
+                    p = p + (match(dstmac=VNH_2_mac[a]) >> modify(dstmac=VNH_2_mac[b]))
             if rewrite_policy:
-                rewrite_policy += match(outport=participant_list[participant][neighbor]) >> (p)
+                rewrite_policy += match(outport=participant_list[participant][neighbor][0]) >> (p)
             else:
-                rewrite_policy = match(outport=participant_list[participant][neighbor]) >> (p)
+                rewrite_policy = match(outport=participant_list[participant][neighbor][0]) >> (p)
 
     if rewrite_policy:
         return rewrite_policy
