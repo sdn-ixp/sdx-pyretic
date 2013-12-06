@@ -338,6 +338,7 @@ def vnh_assignment(sdx,participants):
     # Prefixes:
     VNH_2_IP={'VNHB':'172.0.0.201','VNHC':'172.0.0.301','VNHA':'172.0.0.101','VNHD':'172.0.0.401'}
     VNH_2_mac={'VNHA':'A1:A1:A1:A1:A1:00','VNHC':'C1:C1:C1:C1:C1:00','VNHB':'B1:B1:B1:B1:B1:00','VNHD':'D1:D1:D1:D1:D1:00'}
+    
     prefixes={'p1':IPv4Network('11.0.0.0/24'),
               'p2':IPv4Network('12.0.0.0/24'),
               'p3':IPv4Network('13.0.0.0/24'),
@@ -463,43 +464,22 @@ def vnh_assignment(sdx,participants):
         X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
         print "Policy after Step 5b:", X_b
         
-        X_c = step5c(participant, fwd_map)
+        X_c = step5c(participant, participant_list, fwd_map)
         print "Policy after Step 5c:\n", (X_b >> X_c)
         
         participants_policies[participant]= (X_b >> X_c)
 
 
-def step5c(participant, fwd_map):
-    p = match()
+def step5c(participant, participant_list, fwd_map):
+    rewrite_policy = match()
     for neighbor in fwd_map[participant]:
-        for (a,b) in fwd_map[participant][neighbor].items():
-            p = p + (match(dstmac=a) >> modify(dstmac=b))
-    return p
- 
-#def step5c(policy,participant,participant_list,fwd_map, acc=[]):
-#    if isinstance(policy, parallel):
-#        l = []
-#        map(lambda p: l.append(step5c(p, participant, participant_list, fwd_map)), policy.policies)
-#        return l
-#    elif isinstance(policy, sequential):
-#        a = []
-#        return map(lambda p: step5c(p, participant, participant_list, fwd_map, a), policy.policies)
-#    elif isinstance(policy, if_):
-#        l = []
-#        l.append(step5c(policy.pred, participant, participant_list, fwd_map))
-#        l.append(step5c(policy.t_branch, participant, participant_list, fwd_map))
-#        l.append(step5c(policy.f_branch, participant, participant_list, fwd_map))
-#        return l
-#    else:
-#        # Base call
-#        if isinstance(policy, match):
-#            print "POLICY", policy
-#            if 'dstmac' in policy.map:
-#                acc.append(policy.map['dstmac'])
-#        if isinstance(policy, fwd):
-#            peer=get_peerName(policy.outport, participant_list[participant])
-#            print "ACC POUET:", acc
-#            return {peer:acc}
+        if neighbor != participant:
+            p = match()
+            for (a,b) in fwd_map[participant][neighbor].items():
+                p = p + (match(dstmac=a) >> modify(dstmac=b))
+            rewrite_policy += match(outport=participant_list[participant][neighbor]) >> (p)
+    return rewrite_policy
+
             
 def get_peerName(port,p_list):
     for peer in p_list:
