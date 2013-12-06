@@ -352,6 +352,16 @@ def vnh_assignment(sdx,participants):
                       'C':{'A':[1],'B':[2],'C':[3],'D':[4]},
                       'D':{'A':[1],'B':[2],'C':[3],'D':[4]}
                       }
+    
+    port_2_participant = {
+        1 : 'A',
+        2 : 'B',
+        21 : 'B',
+        22 : 'B',
+        3 : 'C',
+        4 : 'D'
+    }
+    
     peer_group={'pg1':[1,2,3,4]}
     # Set of prefixes for A's best paths
     # We will get this data structure from RIB
@@ -464,23 +474,31 @@ def vnh_assignment(sdx,participants):
         X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
         print "Policy after Step 5b:", X_b
         
-        X_c = step5c(participant, participant_list, fwd_map)
+        X_c = step5c(X_b, participant, participant_list, port_2_participant, fwd_map)
         print "Policy after Step 5c:\n", (X_b >> X_c)
         
         participants_policies[participant]= (X_b >> X_c)
-
-
-def step5c(participant, participant_list, fwd_map):
-    rewrite_policy = match()
-    for neighbor in fwd_map[participant]:
+        
+def step5c(policy, participant, participant_list, port_2_participant, fwd_map):
+    fwd_neighbors = [port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)]
+    
+    rewrite_policy = None
+    
+    for neighbor in fwd_neighbors:
         if neighbor != participant:
             p = match()
             for (a,b) in fwd_map[participant][neighbor].items():
                 p = p + (match(dstmac=a) >> modify(dstmac=b))
-            rewrite_policy += match(outport=participant_list[participant][neighbor]) >> (p)
-    return rewrite_policy
+            if rewrite_policy:
+                rewrite_policy += match(outport=participant_list[participant][neighbor]) >> (p)
+            else:
+                rewrite_policy = match(outport=participant_list[participant][neighbor]) >> (p)
 
-            
+    if rewrite_policy:
+        return rewrite_policy
+    else:
+        return passthrough
+
 def get_peerName(port,p_list):
     for peer in p_list:
         if port in p_list[peer]:

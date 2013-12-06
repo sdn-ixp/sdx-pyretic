@@ -129,6 +129,31 @@ def get_default_forwarding_policy(participant_id):
     global participant_to_ebgp_nh_received
     return parallel([match(dstip=IPPrefix(str(pfx))) >> fwd(nh) for (pfx, nh) in participant_to_ebgp_nh_received[participant_id].items()])
 
+def extract_all_forward_actions_from_policy(policy, acc=[]):
+    # Recursive call
+    if isinstance(policy, parallel) or isinstance(policy, sequential):
+        fwd_set = set()
+        for sub_policy in policy.policies:
+            ans = extract_all_forward_actions_from_policy(sub_policy)
+            try:
+                iterator = iter(ans)
+            except TypeError:
+                if ans is not None:
+                    fwd_set.add(ans)
+            else:
+                for elem in ans:
+                    if elem is not None:
+                        fwd_set.add(elem)
+        return fwd_set
+    elif isinstance(policy, if_):
+        return extract_all_forward_actions_from_policy(policy.t_branch) | extract_all_forward_actions_from_policy(policy.f_branch)
+    else:
+        # Base call
+        if isinstance(policy, fwd):
+            return policy.outport
+        else:
+            return None
+
 def extract_all_matches_from_policy(policy, acc=[]):
     # Recursive call
     if isinstance(policy, parallel):
