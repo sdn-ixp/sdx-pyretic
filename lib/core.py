@@ -324,11 +324,13 @@ def get_fwdMap(part_2_VNH):
         for vname,pfx in part_2_VNH[participant].items():
             for peer in part_2_VNH:
                 if peer!=participant:
+                    if peer not in fwd_map[participant]:
+                        fwd_map[participant][peer] = {}
                     for vnm in part_2_VNH[peer]:
-                        if part_2_VNH[peer][vnm]==pfx:
-                            fwd_map[participant][vname]=vnm
+                        if part_2_VNH[peer][vnm]==pfx and vnm!=vname:
+                            fwd_map[participant][peer][vname]=vnm
     print "fwd_map: ",fwd_map
-    return fwd_map 
+    return fwd_map
 
 def vnh_assignment(sdx,participants):
     # Step 1:
@@ -461,34 +463,43 @@ def vnh_assignment(sdx,participants):
         X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
         print "Policy after Step 5b:", X_b
         
-        #X_c = step5c(X_b,participant,participant_list,fwd_map)
-        #print "Policy after Step 5c:\n", X_c
+        X_c = step5c(participant, fwd_map)
+        print "Policy after Step 5c:\n", (X_b >> X_c)
         
-        
-        
-        participants_policies[participant]=X_b
+        participants_policies[participant]= (X_b >> X_c)
 
 
-def step5c(policy,participant,participant_list,fwd_map):
-    if isinstance(policy, parallel):
-        return parallel(map(lambda p: step5c(p, participant,participant_list,fwd_map), policy.policies))
-    elif isinstance(policy, sequential):
-        return sequential(map(lambda p: step5c(p, participant,participant_list,fwd_map), policy.policies))
-    elif isinstance(policy, if_):
-        print 'pred',policy.pred,
-        print 'f_branch',policy.f_branch
-        print 't_branch',policy.t_branch
-        return if_(step5c(policy.pred, participant,participant_list,fwd_map), 
-                   step5c(policy.t_branch, participant,participant_list,fwd_map), 
-                   step5c(policy.f_branch, participant,participant_list,fwd_map))
-    else:
-        # Base call
-        if isinstance(policy, fwd):
-            peer=get_peerName(policy.outport,participant_list[participant])
-            print peer
-            if peer!=participant:
-                new_pol=modify
-            
+def step5c(participant, fwd_map):
+    p = match()
+    for neighbor in fwd_map[participant]:
+        for (a,b) in fwd_map[participant][neighbor].items():
+            p = p + (match(dstmac=a) >> modify(dstmac=b))
+    return p
+ 
+#def step5c(policy,participant,participant_list,fwd_map, acc=[]):
+#    if isinstance(policy, parallel):
+#        l = []
+#        map(lambda p: l.append(step5c(p, participant, participant_list, fwd_map)), policy.policies)
+#        return l
+#    elif isinstance(policy, sequential):
+#        a = []
+#        return map(lambda p: step5c(p, participant, participant_list, fwd_map, a), policy.policies)
+#    elif isinstance(policy, if_):
+#        l = []
+#        l.append(step5c(policy.pred, participant, participant_list, fwd_map))
+#        l.append(step5c(policy.t_branch, participant, participant_list, fwd_map))
+#        l.append(step5c(policy.f_branch, participant, participant_list, fwd_map))
+#        return l
+#    else:
+#        # Base call
+#        if isinstance(policy, match):
+#            print "POLICY", policy
+#            if 'dstmac' in policy.map:
+#                acc.append(policy.map['dstmac'])
+#        if isinstance(policy, fwd):
+#            peer=get_peerName(policy.outport, participant_list[participant])
+#            print "ACC POUET:", acc
+#            return {peer:acc}
             
 def get_peerName(port,p_list):
     for peer in p_list:
@@ -546,8 +557,6 @@ def step5b_expand_policy_with_vnhop(policy, participant_id,part_2_VNH,VNH_2_mac,
             if len(list(acc)):
                 print 'a: ',acc
             
-        
-        
         return policy
 
 def get_default_forwarding_policy(best_path,participant,participant_list):
