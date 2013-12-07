@@ -9,8 +9,6 @@ Prerequisites:
 - Pyretic <https://github.com/frenetic-lang/pyretic>
 - The following Python libraries:
   - ipaddr
-  - ...
-
 - Clone the pyretic repository
 - Clone the sdx-platform repository inside the pyretic repository directory (e.g., as sdx)
 
