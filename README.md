@@ -14,7 +14,7 @@ Prerequisites:
 
 Running the platform:
 
-From the root directory of the pyretic repository, simply run
+From the root directory of the pyretic repository, run
 
   ```
   python pyretic.py pyretic.sdx.main
