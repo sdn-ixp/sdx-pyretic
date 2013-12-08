@@ -3,7 +3,7 @@
 #  <website link>
 #
 #  File:
-#        core.py
+#        vnhAssignment.py
 #
 #  Project:
 #        Software Defined Exchange (SDX)
@@ -42,10 +42,8 @@ from pyretic.lib.std import *
 from pyretic.sdx.lib.common import *
 from pyretic.sdx.lib.setOperation import *
 from pyretic.sdx.lib.language import *
-#from pyretic.sdx.lib.policy_converter import *
+
 ## General imports
-
-
 from ipaddr import IPv4Network
 
 
