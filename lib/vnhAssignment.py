@@ -371,9 +371,12 @@ def vnh_assignment(sdx,participants):
     # We will get this data structure from RIB
     participant_to_ebgp_nh_received = {
         'A' : {'p1':'B','p2':'B','p3':'B','p4':'C','p5':'C','p6':'C'}
+        #'A' : {'p1':'B','p2':'B','p3':'B','p4':'C','p5':'C','p6':'C'}
     }
     prefixes_announced={'pg1':{
                                'A':['p0'],
+                               #'B':['p1','p2','p3','p4','p6'],
+                               #'C':['p3','p4','p5','p6'],
                                'B':['p1','p2','p3','p4','p5','p6'],
                                'C':['p1','p2','p3','p4','p5','p6'],
                                'D':['p1','p2','p3','p4','p5','p6'],
@@ -384,9 +387,16 @@ def vnh_assignment(sdx,participants):
         'A':(
             (match_prefixes_set(set(['p1','p2','p3'])) >> fwd(2)) +
             (match_prefixes_set(set(['p4','p5','p6'])) >> fwd(3))
+            #(match(dstport=80) >> fwd(2)) +
+            #(match(dstport=22) >> fwd(3))
          ),
          'B':(
             (match_prefixes_set(set(prefixes_announced['pg1']['B'])) >> fwd(22))
+            #(match(dstport= 80) >> fwd(21)) +
+            #(match(dstport=22) >> fwd(21)) +
+            #(match_prefixes_set(set(['p1'])) >> fwd(21)) +
+            #(match_prefixes_set(set(['p4'])) >> fwd(21))+
+            #(match_prefixes_set(set(prefixes_announced['pg1']['B']).difference(set(['p1','p4']))) >> fwd(22))
          ),
          'C':(
             (match_prefixes_set(set(prefixes_announced['pg1']['C'])) >> fwd(3))
@@ -472,8 +482,6 @@ def vnh_assignment(sdx,participants):
         
         X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
         print "Policy after Step 5b:", X_b
-        
-        print "5b classifier: %s" % (X_b.compile())
         
         X_c = step5c(X_b, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac)
         print "Policy after Step 5c:\n", (X_b >> X_c)
