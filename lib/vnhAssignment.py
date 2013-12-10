@@ -162,12 +162,12 @@ def get_peerName(port,p_list):
             return peer
     return ''
 
-def get_default_forwarding_policy(best_path,participant,participant_list):
+def get_default_forwarding_policy(best_path, participant, participant_list):
     #for peer in best_path:
-    policy_ip=parallel([match_prefixes_set(set(best_path[peer]))>>fwd(participant_list[participant][peer][0]) 
+    policy_ip=parallel([match_prefixes_set(set(best_path[peer])) >> fwd(participant_list[participant][peer][0]) 
                         for peer in best_path.keys()]) 
     #print policy_ip
-    return policy_ip 
+    return policy_ip
 
 def return_vnhop(vnh_2_prefix,VNH_2_mac, pfx):
     vnhop=EthAddr('A1:A1:A1:A1:A1:A1')
@@ -188,9 +188,9 @@ def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VN
             p = None
             for (a,b) in fwd_map[participant][neighbor].items():
                 if not p:
-                    p = (match(dstmac=VNH_2_mac[a]) >> modify(dstmac=VNH_2_mac[b]))
+                    p = (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthrough))
                 else:
-                    p = p + (match(dstmac=VNH_2_mac[a]) >> modify(dstmac=VNH_2_mac[b]))
+                    p = p + (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthough))
             if rewrite_policy:
                 rewrite_policy += match(outport=participant_list[participant][neighbor][0]) >> (p)
             else:
@@ -370,27 +370,23 @@ def vnh_assignment(sdx,participants):
     # Set of prefixes for A's best paths
     # We will get this data structure from RIB
     participant_to_ebgp_nh_received = {
-        'A' : {'p1':'D','p2':'D','p3':'D','p4':'C','p5':'C','p6':'C'}
+        'A' : {'p1':'B','p2':'B','p3':'B','p4':'C','p5':'C','p6':'C'}
     }
     prefixes_announced={'pg1':{
                                'A':['p0'],
-                               'B':['p1','p2','p3','p4','p6'],
-                               'C':['p3','p4','p5','p6'],
+                               'B':['p1','p2','p3','p4','p5','p6'],
+                               'C':['p1','p2','p3','p4','p5','p6'],
                                'D':['p1','p2','p3','p4','p5','p6'],
                                }
                         }
     
     participants_policies = {
         'A':(
-            (match(dstport=80) >> fwd(2)) +
-            (match(dstport=22) >> fwd(3)) 
+            (match_prefixes_set(set(['p1','p2','p3'])) >> fwd(2)) +
+            (match_prefixes_set(set(['p4','p5','p6'])) >> fwd(3))
          ),
          'B':(
-            (match(dstport= 80) >> fwd(21)) +
-            (match(dstport=22) >> fwd(21)) +
-            (match_prefixes_set(set(['p1'])) >> fwd(21)) +
-            (match_prefixes_set(set(['p4'])) >> fwd(21))+
-            (match_prefixes_set(set(prefixes_announced['pg1']['B']).difference(set(['p1','p4']))) >> fwd(22))           
+            (match_prefixes_set(set(prefixes_announced['pg1']['B'])) >> fwd(22))
          ),
          'C':(
             (match_prefixes_set(set(prefixes_announced['pg1']['C'])) >> fwd(3))
@@ -398,7 +394,6 @@ def vnh_assignment(sdx,participants):
          'D':(
             (match_prefixes_set(set(prefixes_announced['pg1']['D'])) >> fwd(4))
          ),
-        
     }
 
     # Step 1:
@@ -478,7 +473,11 @@ def vnh_assignment(sdx,participants):
         X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
         print "Policy after Step 5b:", X_b
         
+        print "5b classifier: %s" % (X_b.compile())
+        
         X_c = step5c(X_b, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac)
         print "Policy after Step 5c:\n", (X_b >> X_c)
+        
+        print "Final classifier: %s" % (X_b >> X_c).compile()
         
         participants_policies[participant]= (X_b >> X_c)
