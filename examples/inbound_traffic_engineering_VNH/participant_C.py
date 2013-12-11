@@ -70,12 +70,7 @@ def policy(participant, fwd):
         (parallel([match(dstip=participants["A"]["IPP"][i]) for i in range(len(participants["A"]["IPP"]))]) >> 
          fwd(participant.peers['B'])) +
         (parallel([match(dstip=participants["B"]["IPP"][i]) for i in range(len(participants["B"]["IPP"]))]) >> 
-         fwd(participant.peers['B']))+
-        # C's incoming policy is to get web traffic via Router C1 and rest from C2
-        # Note that participants are not aware of VNH assignment. VNH is SDX's runtime activity only.
-        (parallel([match(dstip=participants["C"]["Policy1"][i]) for i in range(len(participants["C"]["Policy1"]))])>>
-         (if_(match(dstport=80),(modify(dstip=participant.phys_ports[0].ip)>>fwd(participant.phys_ports[0])),
-              (modify(dstip=participant.phys_ports[1].ip)>>fwd(participant.phys_ports[1])))))
+         fwd(participant.peers['B']))
     )
     #print final_policy.policies[0]
     return final_policy

@@ -79,7 +79,8 @@ def main():
     #print sdx_policy
     #for participant in sdx_base.participants:
     #    print participant.id_
-    #print sdx_policy
+    print "Compiled SDX Policies"
+    print sdx_policy
     
     # Start the Quagga Interface
     thread.start_new_thread(qI.main(sdx_base))
