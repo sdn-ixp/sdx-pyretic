@@ -179,7 +179,7 @@ def return_vnhop(vnh_2_prefix,VNH_2_mac, pfx):
 
 
 def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac):
-    fwd_neighbors = [port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)]    
+    fwd_neighbors = set([port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)])
     rewrite_policy = None
     for neighbor in fwd_neighbors:
         if neighbor != participant:
@@ -189,10 +189,11 @@ def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VN
                     p = (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthrough))
                 else:
                     p = p >> (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthrough))
-            if rewrite_policy:
+            if rewrite_policy and p:
                 rewrite_policy += match(outport=participant_list[participant][neighbor][0]) >> (p)
             else:
-                rewrite_policy = match(outport=participant_list[participant][neighbor][0]) >> (p)
+                if p:
+                    rewrite_policy = match(outport=participant_list[participant][neighbor][0]) >> (p)
     if rewrite_policy:
         return rewrite_policy
     else:

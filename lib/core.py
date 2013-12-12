@@ -66,15 +66,15 @@ participant_2_port={'A':{'A':[1],'B':[2],'C':[3],'D':[4]},
                       }
 prefixes_announced={'pg1':{
                                'A':['p0'],
-                               'B':['p1','p2','p3','p4','p6'],
-                               'C':['p3','p4','p5','p6'],
-                               'D':['p1','p2','p3','p4','p5','p6'],
+                               'B':['p1','p2','p3'],
+                               'C':['p1','p2','p3'],
+                               'D':['p1','p2','p3']
                                }
                         }
 # Set of prefixes for A's best paths
 # We will get this data structure from RIB
 participant_to_ebgp_nh_received = {
-        'A' : {'p1':'D','p2':'D','p3':'D','p4':'C','p5':'C','p6':'C'}
+        'A' : {'p1':'C','p2':'C','p3':'C'}
     }
 
 peer_groups={'pg1':[1,2,3,4]}
@@ -84,10 +84,7 @@ VNH_2_mac={'VNHA':'A1:A1:A1:A1:A1:00','VNHC':'C1:C1:C1:C1:C1:00','VNHB':'B1:B1:B
     
 prefixes={'p1':IPv4Network('11.0.0.0/24'),
           'p2':IPv4Network('12.0.0.0/24'),
-          'p3':IPv4Network('13.0.0.0/24'),
-          'p4':IPv4Network('14.0.0.0/24'),
-          'p5':IPv4Network('15.0.0.0/24'),
-          'p6':IPv4Network('16.0.0.0/24')
+          'p3':IPv4Network('13.0.0.0/24')
               }
 port_2_participant = {
         1 : 'A',

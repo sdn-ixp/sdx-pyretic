@@ -64,19 +64,10 @@ def policy(participant, sdx):
     prefixes_announced=sdx.prefixes_announced
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
     final_policy=(
-                    (match(dstport= 80) >> sdx.fwd(participant.phys_ports[1])) +
-                    (match(dstport=22) >> sdx.fwd(participant.phys_ports[1])) +
-                    (match_prefixes_set(set(['p1'])) >> sdx.fwd(participant.phys_ports[1])) +
-                    (match_prefixes_set(set(['p4'])) >> sdx.fwd(participant.phys_ports[1]))+
-                    (match_prefixes_set(set(prefixes_announced['pg1']['B']).difference(set(['p1','p4']))) >> sdx.fwd(participant.phys_ports[2]))
+                    (match_prefixes_set(set(['p1', 'p2'])) >> sdx.fwd(participant.phys_ports[1])) +
+                    (match_prefixes_set(set(['p3'])) >> sdx.fwd(participant.phys_ports[2]))
                 )
-            
     return final_policy
-    
-    
-    
-    
-    
     
     
     

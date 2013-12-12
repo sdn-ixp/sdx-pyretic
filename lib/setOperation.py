@@ -5,6 +5,7 @@
 import os,sys
 
 def decompose_set(tdict):
+    print "tdict: %s" % (tdict)
     pmap=[]
     for key in tdict:
         for lst in tdict[key]:

@@ -61,7 +61,6 @@ def policy(participant, sdx):
         Specify participant policy
     '''
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
-    final_policy=((match(dstport=80) >> sdx.fwd(participant.peers['B'])) + 
-                  (match(dstport=22) >> sdx.fwd(participant.peers['C'])))
+    final_policy = (match(dstport=80) >> sdx.fwd(participant.peers['B']))
     #print final_policy            
     return final_policy
