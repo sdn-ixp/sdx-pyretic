@@ -75,12 +75,17 @@ def sdx():
 def main():
     """Handle ARPs, BGPs, SDX and then do MAC learning"""
     print "Parsing Configurations"
+    
+    start_parse=time.time()
     (sdx_policy,sdx_base) = sdx()
+    print  time.time() - start_parse, "seconds"
     #print sdx_policy
     #for participant in sdx_base.participants:
     #    print participant.id_
     print "Compiled SDX Policies"
-    print sdx_policy
+    start_comp=time.time()
+    print sdx_policy.compile()
+    print  time.time() - start_comp, "seconds"
     
     # Start the Quagga Interface
     thread.start_new_thread(qI.main(sdx_base))

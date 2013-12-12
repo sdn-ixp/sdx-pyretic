@@ -188,7 +188,10 @@ def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VN
                 if not p:
                     p = (match(dstmac=VNH_2_mac[a]) >> modify(dstmac=VNH_2_mac[b]))
                 else:
+
                     p = p + (match(dstmac=VNH_2_mac[a]) >> modify(dstmac=VNH_2_mac[b]))
+                    p = p + (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthrough))
+
             if rewrite_policy:
                 rewrite_policy += match(outport=participant_list[participant][neighbor][0]) >> (p)
             else:
