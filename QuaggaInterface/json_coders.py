@@ -16,9 +16,9 @@ class MyDecoder(json.JSONDecoder):
             module_name=d.pop('__module__')
             module=__import__(module_name)
             #module=importlib.import_module(module_name)
-            print 'Module:',module
+            #print 'Module:',module
             class_ = getattr(module,class_name)
-            print 'Class:',class_
+            #sprint 'Class:',class_
             # decode the other params
             args=dict((key.encode('ascii'),value) for key,value in d.items())
             inst=class_(**args)
@@ -28,7 +28,7 @@ class MyDecoder(json.JSONDecoder):
         return inst
 
 def convert_to_builtin_type(obj):
-    print 'default(', repr(obj), ')'
+    #print 'default(', repr(obj), ')'
     # Convert objects to a dictionary of their representation
     d = { '__class__':obj.__class__.__name__,
         '__module__':obj.__module__,

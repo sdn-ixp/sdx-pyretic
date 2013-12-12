@@ -45,6 +45,13 @@ class attr():
         # limiting the number of JSON variables for now
         return dict(aspath=self.aspath,nexthop=self.nexthop,origin=self.origin,med=self.med)
 
+
+class prefix:
+    def __init__(self,family='',prefixlen=0,address=''):
+        self.family=family
+        self.prefixlen=prefixlen
+        self.address=address
+
 class info():
     def __init__(self,peer='',attr=attr(),uptime='',infoType='',subType=''):
         self.peer=peer
@@ -56,11 +63,7 @@ class info():
     def reprJSON(self):
        return dict(peer=self.peer,attr=self.attr,uptime=self.uptime,infoType=self.infoType,subtype=self.subType)
 
-class prefix:
-    def __init__(self,family='',prefixlen=0,address=''):
-        self.family=family
-        self.prefixlen=prefixlen
-        self.address=address
+
 
 
 

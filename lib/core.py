@@ -10,8 +10,8 @@
 #
 #  Author:
 #        Laurent Vanbever
-#        Muhammad Shahbaz
 #        Arpit Gupta
+#        Muhammad Shahbaz
 #
 #  Copyright notice:
 #        Copyright (C) 2012, 2013 Georgia Institute of Technology
@@ -40,23 +40,105 @@ from pyretic.lib.std import *
 
 ## SDX-specific imports
 from pyretic.sdx.lib.common import *
-
+from pyretic.sdx.lib.setOperation import *
+from pyretic.sdx.lib.language import *
+#from pyretic.sdx.lib.policy_converter import *
+from pyretic.sdx.lib.vnhAssignment import *
 ## General imports
 import json
 from importlib import import_module
-
+from ipaddr import IPv4Network
 ###
 ### SDX classes
 ###
+# Need to automate generation of these data structures in future
 
+prefix_2_participant={'100.0.0.0/16':{'A':['B'],'B':['C']},
+                      '120.0.0.0/16':{'B':['A','C']},
+                      '140.0.0.0/16':{'C':['B'],'B':['A']},
+                      '150.0.0.0/16':{'C':['B'],'B':['A']},
+                      }
+
+participant_2_port={'A':{'A':[1],'B':[2],'C':[3],'D':[4]},
+                      'B':{'A':[1],'B':[2,21,22],'C':[3],'D':[4]},
+                      'C':{'A':[1],'B':[2],'C':[3],'D':[4]},
+                      'D':{'A':[1],'B':[2],'C':[3],'D':[4]}
+                      }
+prefixes_announced={'pg1':{
+                               'A':['p0'],
+                               'B':['p1','p2','p3','p4','p6'],
+                               'C':['p3','p4','p5','p6'],
+                               'D':['p1','p2','p3','p4','p5','p6'],
+                               }
+                        }
+# Set of prefixes for A's best paths
+# We will get this data structure from RIB
+participant_to_ebgp_nh_received = {
+        'A' : {'p1':'D','p2':'D','p3':'D','p4':'C','p5':'C','p6':'C'}
+    }
+
+peer_groups={'pg1':[1,2,3,4]}
+VNH_2_IP={'VNHB':'172.0.0.201','VNHC':'172.0.0.301','VNHA':'172.0.0.101','VNHD':'172.0.0.401'}
+VNH_2_mac={'VNHA':'A1:A1:A1:A1:A1:00','VNHC':'C1:C1:C1:C1:C1:00','VNHB':'B1:B1:B1:B1:B1:00',
+               'VNHD':'D1:D1:D1:D1:D1:00'}
+    
+prefixes={'p1':IPv4Network('11.0.0.0/24'),
+          'p2':IPv4Network('12.0.0.0/24'),
+          'p3':IPv4Network('13.0.0.0/24'),
+          'p4':IPv4Network('14.0.0.0/24'),
+          'p5':IPv4Network('15.0.0.0/24'),
+          'p6':IPv4Network('16.0.0.0/24')
+              }
+port_2_participant = {
+        1 : 'A',
+        2 : 'B',
+        21 : 'B',
+        22 : 'B',
+        3 : 'C',
+        4 : 'D'
+    }
 class SDX(object):
     """Represent a SDX platform configuration"""
     def __init__(self):
         self.participants = []
-
+        self.sdx_ports={}
         self.participant_id_to_in_var = {}
         self.out_var_to_port = {}
         self.port_id_to_out_var = {}
+        self.policy_2_prefix={}
+        self.prefix_2_policy={}
+        self.prefix_2_participant=prefix_2_participant # This will be later updated from the BGP RIB table
+        self.policy_2_VNH={}
+        self.participant_2_port=participant_2_port
+        self.prefixes_announced=prefixes_announced
+        self.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received
+        self.peer_groups=peer_groups
+        self.VNH_2_IP=VNH_2_IP
+        self.VNH_2_mac=VNH_2_mac
+        self.prefixes=prefixes
+        self.port_2_participant=port_2_participant
+        
+    def get_participantName(self,ip):
+        pname=''
+        #print self.sdx_ports
+        #print ip
+        for participant_name in self.sdx_ports:
+            for port in self.sdx_ports[participant_name]:
+                #print port.ip
+                if IP(ip)==port.ip:
+                    #print "IP matched"
+                    pname=participant_name
+                    break
+        return pname
+    def get_neighborList(self,sname):
+        #print type(sname)
+        neighbor_list=[]
+        for participant in self.participants:
+            #print participant.peers.keys()
+            if sname in participant.peers.keys():
+                #print "Neighbor found",participant.id_
+                neighbor_list.append(participant.id_) 
+        return neighbor_list
     
     def add_participant(self, participant):
         self.participants.append(participant)
@@ -66,6 +148,8 @@ class SDX(object):
             self.port_id_to_out_var[port.id_] = "out" + participant.id_.upper() + "_" + str(i)
             self.out_var_to_port["out" + participant.id_.upper() + "_" + str(i)] = port
             i += 1
+    
+    #def return_participant(self,ip):
     
     def fwd(self, port):
         if isinstance(port, PhysicalPort):
@@ -143,6 +227,20 @@ def sdx_participant_policies(sdx_config):
     return sdx_policy
 
 
+    
+def sdx_platform(sdx_config):
+    '''
+        Defines the SDX platform workflow
+    '''
+    #print sdx_config.out_var_to_port
+    #print sdx_config.participant_id_to_in_var
+    return (
+        sdx_preprocessing(sdx_config) >>
+        sdx_participant_policies(sdx_config) >>
+        sdx_postprocessing(sdx_config)
+    )
+ 
+
 ###
 ### SDX primary functions
 ###
@@ -151,7 +249,7 @@ def sdx_parse_config(config_file):
     sdx = SDX()
     
     sdx_config = json.load(open(config_file, 'r'))
-
+    #print sdx_config
     sdx_ports = {}
     sdx_vports = {}
     sdx_participants = {}
@@ -163,10 +261,11 @@ def sdx_parse_config(config_file):
         
         ''' Adding physical ports '''
         participant = sdx_config[participant_name]
-        sdx_ports[participant_name] = [PhysicalPort(id_ = participant["Ports"][i]['Id'], mac = MAC(participant["Ports"][i]["MAC"])) for i in range(0, len(participant["Ports"]))]     
+        sdx_ports[participant_name] = [PhysicalPort(id_ = participant["Ports"][i]['Id'], mac = MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
+        #print sdx_ports[participant_name][0].ip
         ''' Adding virtual port '''
         sdx_vports[participant_name] = VirtualPort() #Check if we need to add a MAC here
-        
+    sdx.sdx_ports=sdx_ports   
     for participant_name in sdx_config:
         peers = {}
         
@@ -181,30 +280,43 @@ def sdx_parse_config(config_file):
         sdx.add_participant(sdx_participants[participant_name])
     
     return (sdx, sdx_participants)
-
+                    
+    
 def sdx_parse_policies(policy_file, sdx, participants):
+
     
-    sdx_policies = json.load(open(policy_file, 'r'))
-    
+    sdx_policies = json.load(open(policy_file, 'r')) 
+ 
     ''' 
         Get participants policies
     '''
     for participant_name in sdx_policies:
         participant = participants[participant_name]
         
-        policy_modules = [import_module(sdx_policies[participant_name][i]) for i in range(0, len(sdx_policies[participant_name]))]
+        policy_modules = [import_module(sdx_policies[participant_name][i]) 
+                          for i in range(0, len(sdx_policies[participant_name]))]
         
         participant.policies = parallel([
-             policy_modules[i].policy(participant, sdx.fwd) for i in range(0, len(sdx_policies[participant_name]))
-        ])
+             policy_modules[i].policy(participant, sdx.fwd) 
+             for i in range(0, len(sdx_policies[participant_name]))])  
+        print "Before pre",participant.policies
+        # translate these policies for VNH Assignment
+        participant.policies=pre_VNH(participant.policies,sdx,participant_name)
+        #print "After pre: ",participant.policies
+    #print sdx.out_var_to_port[u'outB_1'].id_  
+    
+    
+    
+    # Virtual Next Hop Assignment
+    vnh_assignment(sdx,participants) 
+    print "Completed VNH Assignment"
+    # translate these policies post VNH Assignment
+    
+    for participant_name in participants:
+        participants[participant_name].policies=post_VNH(participants[participant_name].policies,sdx,participant_name)
+        print participant_name,participants[participant_name].policies
 
-def sdx_platform(sdx_config):
-    '''
-        Defines the SDX platform workflow
-    '''
-    return (
-        sdx_preprocessing(sdx_config) >>
-        sdx_participant_policies(sdx_config) >>
-        sdx_postprocessing(sdx_config)
-    )
- 
+    
+
+            
+    

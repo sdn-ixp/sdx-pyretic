@@ -44,9 +44,10 @@ from pyretic.lib.std import *
 
 class Port(object):
     """Represents a switch port"""
-    def __init__(self, mac='', participant=None):
+    def __init__(self, mac='', participant=None,ip=''):
         self.mac = mac
         self.participant = participant
+        self.ip=ip
 
 class PhysicalPort(Port):
     """Abstract class that represents a physical port"""
@@ -61,7 +62,7 @@ class VirtualPort(Port):
 
 class SDXParticipant(object):
     """Represent a particular SDX participant"""
-    def __init__(self, id_, vport, phys_ports, peers={}, policies=None):
+    def __init__(self, id_, vport, phys_ports, peers={}, policies=None, rib={}):
         self.id_ = id_
         self.vport = vport
         self.phys_ports = phys_ports
@@ -69,6 +70,7 @@ class SDXParticipant(object):
         self.policies = policies        
         self.vport.participant = self ## set the participant
         self.n_policies=0
+        self.rib=rib
     
     def init_policy(self,new_policy):
         self.policies=new_policy

@@ -22,17 +22,10 @@ def modify_jsonMessage(json_message):
     totalsent = 0
     dmp=json.dumps(json_message, cls=ComplexEncoder,default=convert_to_builtin_type)
     s.sendall(dmp)
-    #s.sendall(json.dumps(json_message, cls=ComplexEncoder))
 
     # Receive return value
     recvdata=s.recv(1024)
-    #while True:
-    #    data = s.recv(1024)
-    #    print data
-    #    if not data:
-    #        s.close()
-    #        break
-    #    recvdata=recvdata+data
+
 
     return recvdata
 
@@ -56,15 +49,20 @@ def modify_updateMessage(update_message):
     mupdate_message=json_to_update(rjson_message)
 
 def main():
-
+    if len(sys.argv)< 3:
+        print "Usage: python quagga_sender.py <peer> <prefix>"
+    peer_input=sys.argv[1]
+    prefix_input=sys.argv[2].split('/')
+    print prefix_input
+    
     print "Send an UPDATE Message"
     # Create an update packet
     aspath_test=aspath(0,'1000,1002,1030')
-    attr_test=attr(aspath=aspath_test)
-    update_object=info(peer='192.168.56.102',attr=attr_test,uptime=10)
+    attr_test=attr(aspath=aspath_test,nexthop=peer_input)
+    update_object=info(peer=peer_input,attr=attr_test,uptime=10)
     jmesg=jmessage(tag='sender:quagga',type='BGP_UPDATE',
-            update=update_object,prefix=prefix(address='10.0.0.0',
-                prefixlen=16,family='AF_INET'))
+            update=update_object,prefix=prefix(address=prefix_input[0],
+                prefixlen=prefix_input[1],family='AF_INET'))
     # get modified update message from the SDX controller
     mupdate_message=modify_updateMessage(jmesg)
 

@@ -9,8 +9,8 @@
 #        Software Defined Exchange (SDX)
 #
 #  Author:
-#        Muhammad Shahbaz
 #        Arpit Gupta (glex.qsd@gmail.com)
+#        Muhammad Shahbaz
 #        Laurent Vanbever
 #
 #  Copyright notice:
@@ -43,9 +43,11 @@ from pyretic.modules.mac_learner import *
 
 ## SDX-specific imports
 from pyretic.sdx.lib.core import *
+import pyretic.sdx.QuaggaInterface.quagga_interface as qI
 
 ## General imports
 import os
+import thread
 
 cwd = os.getcwd()
 
@@ -57,19 +59,35 @@ def sdx():
     ####
     #### Initialize SDX
     ####
+    print "Parsing Global Config ....."
     (base, participants) = sdx_parse_config(cwd + '/pyretic/sdx/sdx_global.cfg')
     
     ####
     #### Apply policies from each participant
     ####
+    print "Parsing Participant's policies ..."
     sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
+    #print base
     
-    return sdx_platform(base)
+    return (sdx_platform(base),base)
 
 ### Main ###
 def main():
     """Handle ARPs, BGPs, SDX and then do MAC learning"""
-    sdx_policy = sdx()
-    print sdx_policy
+    print "Parsing Configurations"
+    
+    start_parse=time.time()
+    (sdx_policy,sdx_base) = sdx()
+    print  time.time() - start_parse, "seconds"
+    #print sdx_policy
+    #for participant in sdx_base.participants:
+    #    print participant.id_
+    print "Compiled SDX Policies"
+    start_comp=time.time()
+    print sdx_policy.compile()
+    print  time.time() - start_comp, "seconds"
+    
+    # Start the Quagga Interface
+    thread.start_new_thread(qI.main(sdx_base))
     
     return if_(ARP, arp(), if_(BGP, identity, sdx_policy)) >> mac_learner()
