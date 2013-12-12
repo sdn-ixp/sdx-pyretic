@@ -283,8 +283,7 @@ def sdx_parse_config(config_file):
                     
     
 def sdx_parse_policies(policy_file, sdx, participants):
-
-    
+        
     sdx_policies = json.load(open(policy_file, 'r')) 
  
     ''' 
@@ -297,25 +296,31 @@ def sdx_parse_policies(policy_file, sdx, participants):
                           for i in range(0, len(sdx_policies[participant_name]))]
         
         participant.policies = parallel([
-             policy_modules[i].policy(participant, sdx.fwd) 
+             policy_modules[i].policy(participant, sdx) 
              for i in range(0, len(sdx_policies[participant_name]))])  
         print "Before pre",participant.policies
         # translate these policies for VNH Assignment
         participant.policies=pre_VNH(participant.policies,sdx,participant_name)
         #print "After pre: ",participant.policies
     #print sdx.out_var_to_port[u'outB_1'].id_  
-    
-    
-    
+        
     # Virtual Next Hop Assignment
     vnh_assignment(sdx,participants) 
     print "Completed VNH Assignment"
     # translate these policies post VNH Assignment
     
+    classifier=[]
     for participant_name in participants:
-        participants[participant_name].policies=post_VNH(participants[participant_name].policies,sdx,participant_name)
-        print participant_name,participants[participant_name].policies
-
+        participants[participant_name].policies=post_VNH(participants[participant_name].policies,sdx,participant_name)        
+        start_comp=time.time()
+        classifier.append(participants[participant_name].policies.compile())
+        print participant_name, time.time() - start_comp, "seconds"
+    """
+    print classifier
+    base=None
+    for rule in classifier:
+        print rule
+    """
     
 
             

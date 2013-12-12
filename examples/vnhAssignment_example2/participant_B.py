@@ -57,24 +57,18 @@ def parse_config(config_file):
     
     return participants
 
-def policy(participant, fwd):
+def policy(participant, sdx):
     '''
         Specify participant policy
     '''
-    prefixes_announced={'pg1':{
-                               'A':['p0'],
-                               'B':['p1','p2','p3','p4','p6'],
-                               'C':['p3','p4','p5','p6'],
-                               'D':['p1','p2','p3','p4','p5','p6'],
-                               }
-                        }
+    prefixes_announced=sdx.prefixes_announced
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
     final_policy=(
-                    (match(dstport= 80) >> fwd(participant.phys_ports[1])) +
-                    (match(dstport=22) >> fwd(participant.phys_ports[1])) +
-                    (match_prefixes_set(set(['p1'])) >> fwd(participant.phys_ports[1])) +
-                    (match_prefixes_set(set(['p4'])) >> fwd(participant.phys_ports[1]))+
-                    (match_prefixes_set(set(prefixes_announced['pg1']['B']).difference(set(['p1','p4']))) >> fwd(participant.phys_ports[2]))
+                    (match(dstport= 80) >> sdx.fwd(participant.phys_ports[1])) +
+                    (match(dstport=22) >> sdx.fwd(participant.phys_ports[1])) +
+                    (match_prefixes_set(set(['p1'])) >> sdx.fwd(participant.phys_ports[1])) +
+                    (match_prefixes_set(set(['p4'])) >> sdx.fwd(participant.phys_ports[1]))+
+                    (match_prefixes_set(set(prefixes_announced['pg1']['B']).difference(set(['p1','p4']))) >> sdx.fwd(participant.phys_ports[2]))
                 )
             
     return final_policy

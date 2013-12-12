@@ -424,18 +424,18 @@ def vnh_assignment(sdx,participants):
     # Step 5
     # Step 5a: Get expanded policies
     for participant in participants_policies:
-        print "PARTICIPANT: ",participant
+        #print "PARTICIPANT: ",participant
         X_policy=participants_policies[participant]
-        print "Original policy:", X_policy
+        #print "Original policy:", X_policy
         
         X_a = step5a(X_policy, participant,prefixes_announced,participant_list)
-        print "Policy after 5a:\n\n", X_a
+        #print "Policy after 5a:\n\n", X_a
         
         X_b = step5b(X_a, participant,part_2_VNH,VNH_2_mac,best_paths,participant_list)
-        print "Policy after Step 5b:", X_b
+        #print "Policy after Step 5b:", X_b
         
         X_c = step5c(X_b, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac)
-        print "Policy after Step 5c:\n", (X_b >> X_c)
+        #print "Policy after Step 5c:\n", (X_b >> X_c)
         
         participants_policies[participant]= (X_b >> X_c)
         participants[participant].policies=participants_policies[participant]

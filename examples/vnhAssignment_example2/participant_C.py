@@ -62,20 +62,14 @@ def parse_config(config_file):
     return participants 
 
 
-def policy(participant, fwd):
+def policy(participant, sdx):
     '''
         Specify participant policy
     '''
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
-    prefixes_announced={'pg1':{
-                               'A':['p0'],
-                               'B':['p1','p2','p3','p4','p6'],
-                               'C':['p3','p4','p5','p6'],
-                               'D':['p1','p2','p3','p4','p5','p6'],
-                               }
-                        }
+    prefixes_announced=sdx.prefixes_announced
     
     final_policy= (
-                   (match_prefixes_set(set(prefixes_announced['pg1']['C'])) >> fwd(participant.phys_ports[0]))
+                   (match_prefixes_set(set(prefixes_announced['pg1']['C'])) >> sdx.fwd(participant.phys_ports[0]))
                 )
     return final_policy

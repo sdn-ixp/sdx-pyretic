@@ -84,8 +84,8 @@ def main():
     #    print participant.id_
     print "Compiled SDX Policies"
     start_comp=time.time()
-    print sdx_policy.compile()
-    print  time.time() - start_comp, "seconds"
+    #sdx_policy.compile()
+    print  'Aggregate Compilation',time.time() - start_comp, "seconds"
     
     # Start the Quagga Interface
     thread.start_new_thread(qI.main(sdx_base))
