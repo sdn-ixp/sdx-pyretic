@@ -288,7 +288,6 @@ def sdx_parse_policies(policy_file, sdx, participants):
     '''
     for participant_name in sdx_policies:
         participant = participants[participant_name]
-        
         policy_modules = [import_module(sdx_policies[participant_name][i]) 
                           for i in range(0, len(sdx_policies[participant_name]))]
         
