@@ -194,7 +194,7 @@ def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VN
                 if not p:
                     p = (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthrough))
                 else:
-                    p = p + (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthough))
+                    p = p + (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthrough))
             if rewrite_policy:
                 if p:
                     rewrite_policy += match(outport=participant_list[participant][neighbor][0]) >> (p)
@@ -387,6 +387,7 @@ def vnh_assignment(sdx,participants):
     
     participants_policies = {
         'A':(
+            (match_prefixes_set(set(['p1'])) >> match(dstport=80) >> fwd(2)) +
             (match_prefixes_set(set(['p1','p2','p3','p4','p5','p6'])) >> fwd(3))
          ),
          'B':(
