@@ -49,6 +49,10 @@ import pyretic.sdx.QuaggaInterface.quagga_interface as qI
 import os
 import thread
 
+# Profile
+import cProfile
+import pstats
+
 cwd = os.getcwd()
 
 BGP_PORT = 179
@@ -84,8 +88,11 @@ def main():
     #    print participant.id_
     print "Compiled SDX Policies"
     start_comp=time.time()
-    print sdx_policy.compile()
+    cProfile.runctx("sdx_policy.compile()", globals(), locals(), "restats")
     print  time.time() - start_comp, "seconds"
+    
+    p = pstats.Stats('restats')
+    p.sort_stats('tottime').print_stats(15)
     
     # Start the Quagga Interface
     thread.start_new_thread(qI.main(sdx_base))

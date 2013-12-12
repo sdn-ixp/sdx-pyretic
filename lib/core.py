@@ -305,8 +305,6 @@ def sdx_parse_policies(policy_file, sdx, participants):
         #print "After pre: ",participant.policies
     #print sdx.out_var_to_port[u'outB_1'].id_  
     
-    
-    
     # Virtual Next Hop Assignment
     vnh_assignment(sdx,participants) 
     print "Completed VNH Assignment"
