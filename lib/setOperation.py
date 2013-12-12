@@ -20,8 +20,17 @@ def decompose_set(tdict):
             tdict[key]=tlist    
     return tdict
 
-def prefix_decompose(pdict,part_2_prefix):
+def get_pdict(part_2_prefix):
+    temp=set()
+    for part in part_2_prefix:
+        for plist in part_2_prefix[part]:
+            temp=temp.union(set(plist))
+    return dict.fromkeys(list(temp), '')
+
+def prefix_decompose(part_2_prefix):
+    pdict=get_pdict(part_2_prefix)
     for key in pdict:
+        #print key
         tempdict={}
         for part in part_2_prefix:
             #tempdict[part]=[]
@@ -42,9 +51,12 @@ def prefix_decompose(pdict,part_2_prefix):
 if __name__ == '__main__':
     
     # prefix list
-    pdict={'c1':'','c2':'','c3':''}
+    pdict={'p1':'','p2':'','p3':''}
     # prefix mapping
-    part_2_prefix={1:[['c3']],2:[['c3','c2'],['c1','c3']],3:[['c1','c2','c3']]}
+    #part_2_prefix={1:[['c3']],2:[['c3','c2'],['c1','c3']],3:[['c1','c2','c3']]}
+    
+    part_2_prefix= {'A': [['p1', 'p2', 'p3'], ['p2', 'p3'], ['p1']], 
+      'C': [['p2', 'p3']], 'B': [['p2', 'p1'], ['p3']], 'D': [['p2', 'p3', 'p1']]}
     print "initial: ",part_2_prefix
     #plist=[['c1'],['c1','c2'],['c1','c2','c3']]
     part_2_prefix_updated=prefix_decompose(pdict,part_2_prefix)

@@ -372,7 +372,7 @@ def vnh_assignment(sdx,participants):
     # Step 2 & 3
     #participant_2_prefix={'A':[PB,PC,PA1,PA2],'B':[PB,['p1'],['p4']],'C':[PC],'D':[PD]}
     print 'Before Set operations: ',participant_2_prefix
-    part_2_prefix_updated=prefix_decompose(prefixes,participant_2_prefix)
+    part_2_prefix_updated=prefix_decompose(participant_2_prefix)
     print 'After Set operations: ',part_2_prefix_updated
     #----------------------------------------------------------------------------------------------------#
     
