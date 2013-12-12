@@ -181,10 +181,14 @@ def return_vnhop(vnh_2_prefix,VNH_2_mac, pfx):
 
 
 def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac):
+<<<<<<< Updated upstream
     fwd_neighbors = set([port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)])
 
     print "Participant:%s -- forwarding neighbor: %s" % (participant, fwd_neighbors)
     
+=======
+    fwd_neighbors = [port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)]    
+>>>>>>> Stashed changes
     rewrite_policy = None
     
     for neighbor in fwd_neighbors:
@@ -256,13 +260,13 @@ def step5b_expand_policy_with_vnhop(policy, participant_id,part_2_VNH,VNH_2_mac,
             for vnhop in unique_vnhops:
                 match_vnhops = match_vnhops + match(dstmac=vnhop)
             #print match_vnhops           
-            print 'acc1: ',acc
-            print policy           
+            #print 'acc1: ',acc
+            #print policy           
             return match_vnhops
         
         elif isinstance(policy, fwd):
-            print 'acc: ',acc
-            print 'policy: ',policy
+            #print 'acc: ',acc
+            #print 'policy: ',policy
             if len(list(acc)):
                 print 'a: ',acc
             
@@ -341,37 +345,24 @@ def step5a(policy, participant, prefixes_announced,participant_list,include_defa
     if include_default_policy:
         p1 = p1 >> get_default_forwarding_policy(participant)
     return p1
+
+def vnh_init(sdx,participants):
+    VNH_2_IP=sdx.VNH_2_IP    
+    VNH_2_mac=sdx.VNH_2_mac
+    prefixes=sdx.prefixes
+    participant_list=sdx.participant_2_port
+    port_2_participant = sdx.port_2_participant    
+    peer_groups=sdx.peer_groups
+    participant_to_ebgp_nh_received = sdx.participant_to_ebgp_nh_received
+    prefixes_announced=sdx.prefixes_announced
+    participants_policies={}
+    for participant_name in participants:
+        participants_policies[str(participant_name)]=participants[participant_name].policies    
+    return VNH_2_IP,VNH_2_mac,prefixes,participant_list,port_2_participant,peer_groups,participant_to_ebgp_nh_received,prefixes_announced,participants_policies
+
     
-def vnh_assignment(sdx,participants):
-    # Step 1:
-    # Get the expanded policies from participant's input policies
-    # Prefixes:
-    VNH_2_IP={'VNHB':'172.0.0.201','VNHC':'172.0.0.301','VNHA':'172.0.0.101','VNHD':'172.0.0.401'}
-    VNH_2_mac={'VNHA':'A1:A1:A1:A1:A1:00','VNHC':'C1:C1:C1:C1:C1:00','VNHB':'B1:B1:B1:B1:B1:00','VNHD':'D1:D1:D1:D1:D1:00'}
     
-    prefixes={'p1':IPv4Network('11.0.0.0/24'),
-              'p2':IPv4Network('12.0.0.0/24'),
-              'p3':IPv4Network('13.0.0.0/24'),
-              'p4':IPv4Network('14.0.0.0/24'),
-              'p5':IPv4Network('15.0.0.0/24'),
-              'p6':IPv4Network('16.0.0.0/24')
-              }
-    
-    participant_list={'A':{'A':[1],'B':[2],'C':[3],'D':[4]},
-                      'B':{'A':[1],'B':[21,22],'C':[3],'D':[4]},
-                      'C':{'A':[1],'B':[2],'C':[3],'D':[4]},
-                      'D':{'A':[1],'B':[2],'C':[3],'D':[4]}
-                      }
-    
-    port_2_participant = {
-        1 : 'A',
-        2 : 'B',
-        21 : 'B',
-        22 : 'B',
-        3 : 'C',
-        4 : 'D'
-    }
-    
+<<<<<<< Updated upstream
     peer_group={'pg1':[1,2,3,4]}
     # Set of prefixes for A's best paths
     # We will get this data structure from RIB
@@ -399,6 +390,12 @@ def vnh_assignment(sdx,participants):
          )
     }
 
+=======
+def vnh_assignment(sdx,participants):
+    # Initialize the required data structures
+    VNH_2_IP,VNH_2_mac,prefixes,participant_list,port_2_participant,peer_group,participant_to_ebgp_nh_received,prefixes_announced,participants_policies =vnh_init(sdx,participants)
+    
+>>>>>>> Stashed changes
     # Step 1:
     #----------------------------------------------------------------------------------------------------#
     # 1. Get the best paths data structure
@@ -482,3 +479,55 @@ def vnh_assignment(sdx,participants):
         print "Final classifier: %s" % (X_b >> X_c).compile()
         
         participants_policies[participant]= (X_b >> X_c)
+        participants[participant].policies=participants_policies[participant]
+        
+        #classifier=participants_policies[participant].compile()
+        #print "Compilation result",classifier
+
+
+def pre_VNH(policy,sdx,participant_name):
+    if isinstance(policy, parallel):
+        return parallel(map(lambda p: pre_VNH(p,sdx,participant_name), policy.policies))
+    elif isinstance(policy, sequential):
+        return sequential(map(lambda p: pre_VNH(p, sdx,participant_name), policy.policies))
+    elif isinstance(policy, if_):
+        return if_(pre_VNH(policy.pred, sdx,participant_name), 
+                   pre_VNH(policy.t_branch, sdx,participant_name), 
+                   pre_VNH(policy.f_branch, sdx,participant_name))
+    else:
+        # Base call
+        if isinstance(policy, modify):            
+            print policy.map
+            if 'state' in policy.map:    
+                #if 'in' in 
+                state=policy.map['state'].encode('ascii','ignore')
+                if 'in' in state:
+                    peer=state.split('in')[1]
+                    print peer
+                    return fwd(sdx.participant_2_port[participant_name][peer][0])
+                else:
+                    pn=state.split('out'+participant_name+'_')[1]
+                    print pn
+                    return fwd(sdx.participant_2_port[participant_name][participant_name][int(pn)])
+                                    
+        return policy
+
+    
+def post_VNH(policy,sdx,participant_name):
+    # get port_2_state for this participant
+    port_2_state={}
+    for peer in sdx.participant_2_port[participant_name]:
+        if peer!=participant_name:
+            port_2_state[sdx.participant_2_port[participant_name][peer][0]]='in'+peer
+        else:
+            i=0
+            for port in sdx.participant_2_port[participant_name][peer]:
+                port_2_state[port]='out'+peer+'_'+str(i)
+                i+=1
+    #print port_2_state
+    # Create the rules to change the state
+    pol=drop
+    for port in port_2_state:
+        pol=pol+(match(outport=port)>>modify(state=port_2_state[port]))
+    #print pol
+    return policy>>pol
