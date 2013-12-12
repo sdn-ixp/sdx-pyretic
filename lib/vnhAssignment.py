@@ -153,7 +153,9 @@ def get_fwdMap(part_2_VNH):
                     for vnm in part_2_VNH[peer]:
                         if part_2_VNH[peer][vnm]==pfx and vnm!=vname:
                             fwd_map[participant][peer][vname]=vnm
-    print "fwd_map: ",fwd_map
+    print "fwd_map: "
+    for item in fwd_map:
+        print "  -- %s -> %s" % (item, fwd_map[item])
     return fwd_map
 
 def get_peerName(port,p_list):
@@ -179,7 +181,9 @@ def return_vnhop(vnh_2_prefix,VNH_2_mac, pfx):
 
 
 def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VNH_2_mac):
-    fwd_neighbors = [port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)]
+    fwd_neighbors = set([port_2_participant[a] for a in extract_all_forward_actions_from_policy(policy)])
+
+    print "Participant:%s -- forwarding neighbor: %s" % (participant, fwd_neighbors)
     
     rewrite_policy = None
     
@@ -192,9 +196,11 @@ def step5c(policy, participant, participant_list, port_2_participant, fwd_map,VN
                 else:
                     p = p + (if_(match(dstmac=VNH_2_mac[a]), modify(dstmac=VNH_2_mac[b]), passthough))
             if rewrite_policy:
-                rewrite_policy += match(outport=participant_list[participant][neighbor][0]) >> (p)
+                if p:
+                    rewrite_policy += match(outport=participant_list[participant][neighbor][0]) >> (p)
             else:
-                rewrite_policy = match(outport=participant_list[participant][neighbor][0]) >> (p)
+                if p:
+                    rewrite_policy = match(outport=participant_list[participant][neighbor][0]) >> (p)
 
     if rewrite_policy:
         return rewrite_policy
@@ -370,40 +376,26 @@ def vnh_assignment(sdx,participants):
     # Set of prefixes for A's best paths
     # We will get this data structure from RIB
     participant_to_ebgp_nh_received = {
-        'A' : {'p1':'B','p2':'B','p3':'B','p4':'C','p5':'C','p6':'C'}
-        #'A' : {'p1':'B','p2':'B','p3':'B','p4':'C','p5':'C','p6':'C'}
+        'A' : {'p1':'C','p2':'C','p3':'C','p4':'C','p5':'C','p6':'C'}
     }
     prefixes_announced={'pg1':{
                                'A':['p0'],
-                               #'B':['p1','p2','p3','p4','p6'],
-                               #'C':['p3','p4','p5','p6'],
                                'B':['p1','p2','p3','p4','p5','p6'],
                                'C':['p1','p2','p3','p4','p5','p6'],
-                               'D':['p1','p2','p3','p4','p5','p6'],
                                }
                         }
     
     participants_policies = {
         'A':(
-            (match_prefixes_set(set(['p1','p2','p3'])) >> fwd(2)) +
-            (match_prefixes_set(set(['p4','p5','p6'])) >> fwd(3))
-            #(match(dstport=80) >> fwd(2)) +
-            #(match(dstport=22) >> fwd(3))
+            (match_prefixes_set(set(['p1','p2','p3','p4','p5','p6'])) >> fwd(3))
          ),
          'B':(
-            (match_prefixes_set(set(prefixes_announced['pg1']['B'])) >> fwd(22))
-            #(match(dstport= 80) >> fwd(21)) +
-            #(match(dstport=22) >> fwd(21)) +
-            #(match_prefixes_set(set(['p1'])) >> fwd(21)) +
-            #(match_prefixes_set(set(['p4'])) >> fwd(21))+
-            #(match_prefixes_set(set(prefixes_announced['pg1']['B']).difference(set(['p1','p4']))) >> fwd(22))
+            (match_prefixes_set(set(['p1','p2','p3'])) >> fwd(21)) +
+            (match_prefixes_set(set(['p4','p5','p6'])) >> fwd(22))
          ),
          'C':(
             (match_prefixes_set(set(prefixes_announced['pg1']['C'])) >> fwd(3))
-         ),
-         'D':(
-            (match_prefixes_set(set(prefixes_announced['pg1']['D'])) >> fwd(4))
-         ),
+         )
     }
 
     # Step 1:
