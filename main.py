@@ -9,8 +9,8 @@
 #        Software Defined Exchange (SDX)
 #
 #  Author:
-#        Muhammad Shahbaz
 #        Arpit Gupta (glex.qsd@gmail.com)
+#        Muhammad Shahbaz
 #        Laurent Vanbever
 #
 #  Copyright notice:
