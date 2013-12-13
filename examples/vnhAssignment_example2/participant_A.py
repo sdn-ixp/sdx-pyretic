@@ -52,8 +52,7 @@ def parse_config(config_file):
     
     for participant_name in participants:
         for i in range(len(participants[participant_name]["IPP"])):
-            participants[participant_name]["IPP"][i] = IPPrefix(participants[participant_name]["IPP"][i])
-    
+            participants[participant_name]["IPP"][i] = IPPrefix(participants[participant_name]["IPP"][i])    
     return participants
 
 def policy(participant, sdx):
@@ -61,6 +60,8 @@ def policy(participant, sdx):
         Specify participant policy
     '''
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
-    final_policy = (match(dstport=80) >> sdx.fwd(participant.peers['B']))
+    final_policy = ((match(dstport=80) >> sdx.fwd(participant.peers['B']))+
+                   (match(dstport=22) >> sdx.fwd(participant.peers['C']))
+                   )
     #print final_policy            
     return final_policy
