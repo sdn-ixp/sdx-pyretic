@@ -78,13 +78,14 @@ def main():
     
     start_parse=time.time()
     (sdx_policy,sdx_base) = sdx()
+    
     print  time.time() - start_parse, "seconds"
-    print sdx_policy
-    for participant in sdx_base.participants:
-        print participant.id_
+    #print sdx_policy
+    #for participant in sdx_base.participants:
+    #    print participant.id_
     print "Compiled SDX Policies"
     start_comp=time.time()
-    #sdx_policy.compile()
+    sdx_policy.compile()
     print  'Aggregate Compilation',time.time() - start_comp, "seconds"
     
     # Start the Quagga Interface
