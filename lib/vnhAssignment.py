@@ -453,17 +453,17 @@ def pre_VNH(policy,sdx,participant_name):
     else:
         # Base call
         if isinstance(policy, modify):            
-            print policy.map
+            #print policy.map
             if 'state' in policy.map:    
                 #if 'in' in 
                 state=policy.map['state'].encode('ascii','ignore')
                 if 'in' in state:
                     peer=state.split('in')[1]
-                    print peer
+                    #print peer
                     return fwd(sdx.participant_2_port[participant_name][peer][0])
                 else:
                     pn=state.split('out'+participant_name+'_')[1]
-                    print pn
+                    #print pn
                     return fwd(sdx.participant_2_port[participant_name][participant_name][int(pn)])
                                     
         return policy
