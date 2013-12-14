@@ -267,6 +267,7 @@ def sdx_parse_config(config_file):
         #print sdx_ports[participant_name][0].ip
         ''' Adding virtual port '''
         sdx_vports[participant_name] = VirtualPort() #Check if we need to add a MAC here
+    
     sdx.sdx_ports=sdx_ports   
     for participant_name in sdx_config:
         peers = {}
@@ -286,8 +287,7 @@ def sdx_parse_config(config_file):
     
 def sdx_parse_policies(policy_file, sdx, participants):
         
-    sdx_policies = json.load(open(policy_file, 'r')) 
- 
+    sdx_policies = json.load(open(policy_file, 'r'))  
     ''' 
         Get participants policies
     '''
