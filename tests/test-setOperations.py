@@ -33,6 +33,9 @@
 #        http://www.gnu.org/licenses/.
 #
 
+## Pyretic-specific imports
+from pyretic.lib.corelib import *
+from pyretic.lib.std import *
 
 # SDX specific imports
 from pyretic.sdx.lib.setOperation import *
@@ -54,6 +57,7 @@ def getNHs(hfile):
     return NH_2_IP
 
 def getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes):
+    
     i=1
     prefixes_announced['pg1']={}
     plist=[]
@@ -62,30 +66,35 @@ def getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes):
             temp=line.split(' ')
             neighbor=temp[0]
             prefix=temp[1].split('\n')[0]
-            if prefix not in plist:
+	    if prefix not in plist:
                 plist.append(prefix)
                 prefixes['p'+str(i)]=IPv4Network(prefix)
                 i+=1
+                if i%10000==0:
+                    print '...'
+
             if neighbor in prefixes_announced['pg1']:
                 prefixes_announced['pg1'][neighbor].append(prefix)
             else:
                 prefixes_announced['pg1'][neighbor]=[prefix]
+            if i%60000==0:
+                    break
     print "extracted data from file, prefixes: ",len(plist)
     # extract the unique prefixes announced
     plist=list(set(plist))
     for neighbor in prefixes_announced['pg1']:
         prefixes_announced['pg1'][neighbor]=list(set(prefixes_announced['pg1'][neighbor]))
     print "extracted the unique IP prefixes: ",len(plist)
-    i=1
-    """
-    for prefix in plist:
-        pname='p'+str(i)
-        prefixes[pname]=IPv4Network(prefix)
-        i+=1
-        print i
-    print prefixes
-    """
-    #print prefixes_announced
+    return plist
+
+
+def get_part_2_prefix(prefixes_announced):
+    part_2_prefix={}
+    for participant in prefixes_announced['pg1']:
+        part_2_prefix[participant]=[]
+        for prefix in prefixes_announced['pg1'][participant]:
+            part_2_prefix[participant].append([prefix])
+    return part_2_prefix
 
 def initializeData():
     print "Initializing data for stress test"
@@ -93,12 +102,24 @@ def initializeData():
     prefixes={}
     prefixes_announced={}
     VNH_2_IP=getNHs(hfile)
-    print VNH_2_IP
-    getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes)
+    #print VNH_2_IP
+    plist=getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes)
+    part_2_prefix=get_part_2_prefix(prefixes_announced)
+    return plist,prefixes,VNH_2_IP,prefixes_announced,part_2_prefix
     
 def main():
     print "Starting the setOperations stress test"
-    initializeData()
+    plist,prefixes,VNH_2_IP,prefixes_announced,part_2_prefix=initializeData()
+    print part_2_prefix.keys()
+    print "Starting the set operation with following parameters:"
+    print "# participants:",len(prefixes_announced['pg1'].keys()),", # prefixes:",len(plist)
+    start_setops=time.time()
+    part_2_prefix_updated=prefix_decompose(part_2_prefix)
+    print "Execution Time: ",time.time()-start_setops,' seconds'
+    
+    
+    
+    
 
 if __name__ == '__main__':
     main()
