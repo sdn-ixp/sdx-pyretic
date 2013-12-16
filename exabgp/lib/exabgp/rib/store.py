@@ -116,7 +116,7 @@ class Store (object):
 
 	def insert_received (self,change):
 		# Set debug point ...
-		pydevd.settrace()
+		#pydevd.settrace()
 		
 		if not self.cache:
 			return
@@ -127,7 +127,7 @@ class Store (object):
 
 	def insert_announced (self,change,force=False):
 		# Set debug point ...
-		pydevd.settrace()
+		#pydevd.settrace()
 		
 		# WARNING : this function can run while we are in the updates() loop
 

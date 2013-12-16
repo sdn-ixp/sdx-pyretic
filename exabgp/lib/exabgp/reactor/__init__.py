@@ -128,7 +128,7 @@ class Reactor (object):
 
 					if self._shutdown:
 						# Set debug point ...
-						pydevd.settrace()
+						#pydevd.settrace()
 						
 						self._shutdown = False
 						self.shutdown()
@@ -147,14 +147,14 @@ class Reactor (object):
 						self.restart()
 					elif self._route_update:
 						# Set debug point ...
-						pydevd.settrace()
+						#pydevd.settrace()
 	
 						self._route_update = False
 						self.route_update()
 
 					while self.schedule(self.processes.received()) or self._pending:
 						# Set debug point ...
-						pydevd.settrace()
+						#pydevd.settrace()
 						
 						self._pending = list(self.run_pending(self._pending))
 

@@ -40,7 +40,7 @@ def __exit(memory,code):
 
 def main ():
 	# Set debug point ...
-	pydevd.settrace()
+	#pydevd.settrace()
 	
 	main = int(sys.version[0])
 	secondary = int(sys.version[2])
@@ -429,7 +429,7 @@ def run (env,comment,configuration,pid=0):
 		logger.configuration(comment)
 
 	# Set debug point ...
-	pydevd.settrace()
+	#pydevd.settrace()
 
 	if not env.profile.enable:
 		Reactor(configuration).run()
