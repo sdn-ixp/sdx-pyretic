@@ -38,11 +38,11 @@
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
-from pyretic.modules.arp import *
 from pyretic.modules.mac_learner import *
 
 ## SDX-specific imports
 from pyretic.sdx.lib.core import *
+from pyretic.sdx.utils.arp import *
 import pyretic.sdx.QuaggaInterface.quagga_interface as qI
 
 ## General imports
@@ -68,8 +68,9 @@ def sdx():
     print "Parsing Participant's policies ..."
     sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
     #print base
-    
-    return (sdx_platform(base),base)
+
+    return ({IP("172.0.0.172"): MAC("08:00:27:8b:e4:7b")},sdx_platform(base),base)
+    # {} is the list of local IP-to-MAC addresses used with VNH
 
 ### Main ###
 def main():
@@ -77,7 +78,7 @@ def main():
     print "Parsing Configurations"
     
     start_parse=time.time()
-    (sdx_policy,sdx_base) = sdx()
+    (ip_mac_list,sdx_policy,sdx_base) = sdx()
     
     print  time.time() - start_parse, "seconds"
     #print sdx_policy
@@ -91,4 +92,4 @@ def main():
     # Start the Quagga Interface
     thread.start_new_thread(qI.main(sdx_base))
     
-    return if_(ARP, arp(), if_(BGP, identity, sdx_policy)) >> mac_learner()
+    return if_(ARP, arp(ip_mac_list), if_(BGP, identity, sdx_policy)) >> mac_learner()
