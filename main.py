@@ -69,8 +69,8 @@ def sdx():
     sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', base, participants)
     #print base
 
-    return ({IP("172.0.0.172"): MAC("08:00:27:8b:e4:7b")},sdx_platform(base),base)
-    # {} is the list of local IP-to-MAC addresses used with VNH
+    return ({IPAddr('172.0.0.172'): EthAddr('08:00:27:8b:e4:7b')},sdx_platform(base),base)
+    # {} is the list of local IP-to-MAC addresses used with VNH. Will be extracted from the sdx_platform()
 
 ### Main ###
 def main():
