@@ -40,10 +40,62 @@ from pyretic.sdx.lib.setOperation import *
 # General imports
 import os,sys
 from ipaddr import IPv4Network
+pfile='data/ams-ix/amsix.map.ebgp.nh.prefixes.txt'
+hfile='data/ams-ix/amsix.map.ebgp.nh.nb.prefixes.txt'
+
+
+def getNHs(hfile):
+    NH_2_IP={}
+    i=1
+    for line in open(hfile,'r').readlines():
+        if line!='\n':
+            NH_2_IP[i]=line.split(' ')[0]
+            i+=1
+    return NH_2_IP
+
+def getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes):
+    i=1
+    prefixes_announced['pg1']={}
+    plist=[]
+    for line in open(pfile,'r').readlines():
+        if line!='\n':
+            temp=line.split(' ')
+            neighbor=temp[0]
+            prefix=temp[1].split('\n')[0]
+            if prefix not in plist:
+                plist.append(prefix)
+                prefixes['p'+str(i)]=IPv4Network(prefix)
+                i+=1
+            if neighbor in prefixes_announced['pg1']:
+                prefixes_announced['pg1'][neighbor].append(prefix)
+            else:
+                prefixes_announced['pg1'][neighbor]=[prefix]
+    print "extracted data from file, prefixes: ",len(plist)
+    # extract the unique prefixes announced
+    plist=list(set(plist))
+    for neighbor in prefixes_announced['pg1']:
+        prefixes_announced['pg1'][neighbor]=list(set(prefixes_announced['pg1'][neighbor]))
+    print "extracted the unique IP prefixes: ",len(plist)
+    i=1
+    """
+    for prefix in plist:
+        pname='p'+str(i)
+        prefixes[pname]=IPv4Network(prefix)
+        i+=1
+        print i
+    print prefixes
+    """
+    #print prefixes_announced
 
 def initializeData():
     print "Initializing data for stress test"
-
+    VNH_2_IP={}
+    prefixes={}
+    prefixes_announced={}
+    VNH_2_IP=getNHs(hfile)
+    print VNH_2_IP
+    getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes)
+    
 def main():
     print "Starting the setOperations stress test"
     initializeData()
