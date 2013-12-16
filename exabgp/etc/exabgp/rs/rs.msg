@@ -1,16 +1,6 @@
 { "exabgp": "2.0", "time": 1387219080, "neighbor": { "ip": "172.0.0.1", "update": { "attribute": { "origin": "igp", "as-path": [ [ 100 ], [ ] ], "med": 0, "atomic-aggregate": false }, "announce": { "ipv4 unicast": { "100.0.0.0/16": { "next-hop": "172.0.0.1" }, "110.0.0.0/16": { "next-hop": "172.0.0.1" } } } } } }
-announce route 110.0.0.0/16 next-hop 172.0.0.1 as-path [ 100 ]
-announce route 100.0.0.0/16 next-hop 172.0.0.1 as-path [ 100 ]
 { "exabgp": "2.0", "time": 1387219080, "neighbor": { "ip": "172.0.0.22", "update": { "attribute": { "origin": "igp", "as-path": [ [ 300 ], [ ] ], "med": 0, "atomic-aggregate": false }, "announce": { "ipv4 unicast": { "140.0.0.0/16": { "next-hop": "172.0.0.22" }, "150.0.0.0/16": { "next-hop": "172.0.0.22" } } } } } }
-announce route 140.0.0.0/16 next-hop 172.0.0.22 as-path [ 300 ]
-announce route 150.0.0.0/16 next-hop 172.0.0.22 as-path [ 300 ]
 { "exabgp": "2.0", "time": 1387219080, "neighbor": { "ip": "172.0.0.11", "update": { "attribute": { "origin": "igp", "as-path": [ [ 200 ], [ ] ], "med": 0, "atomic-aggregate": false }, "announce": { "ipv4 unicast": { "120.0.0.0/16": { "next-hop": "172.0.0.11" }, "150.0.0.0/16": { "next-hop": "172.0.0.11" }, "130.0.0.0/16": { "next-hop": "172.0.0.11" } } } } } }
-announce route 120.0.0.0/16 next-hop 172.0.0.11 as-path [ 200 ]
-announce route 130.0.0.0/16 next-hop 172.0.0.11 as-path [ 200 ]
-announce route 150.0.0.0/16 next-hop 172.0.0.11 as-path [ 200 ]
 { "exabgp": "2.0", "time": 1387219080, "neighbor": { "ip": "172.0.0.21", "update": { "attribute": { "origin": "igp", "as-path": [ [ 300 ], [ ] ], "med": 0, "atomic-aggregate": false }, "announce": { "ipv4 unicast": { "140.0.0.0/16": { "next-hop": "172.0.0.21" } } } } } }
-announce route 140.0.0.0/16 next-hop 172.0.0.21 as-path [ 300 ]
 { "exabgp": "2.0", "time": 1387219400, "neighbor": { "ip": "172.0.0.1", "update": { "withdraw": { "ipv4 unicast": { "100.0.0.0/16": {  } } } } } }
-withdraw route 100.0.0.0/16 next-hop 172.0.0.1
 { "exabgp": "2.0", "time": 1387219404, "neighbor": { "ip": "172.0.0.1", "update": { "withdraw": { "ipv4 unicast": { "110.0.0.0/16": {  } } } } } }
-withdraw route 110.0.0.0/16 next-hop 172.0.0.1
