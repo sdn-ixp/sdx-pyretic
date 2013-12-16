@@ -64,7 +64,7 @@ while True:
 								if (k2=='ipv4 unicast'):
 									for k3,v3 in v2.iteritems():
 										route = k3
-										next_hop = v3['next-hop']
+										next_hop = '172.0.0.172' #v3['next-hop']
 									
 										log.write('announce route %s next-hop %s as-path [ %s ]' % (route,next_hop,as_path))
 										log.write('\n')
