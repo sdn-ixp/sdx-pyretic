@@ -114,11 +114,18 @@ class SDX_Policies(DynamicPolicy):
             else: # Got line 
                 self.update_policy(False)
        
-
+def getMacList(VNH_2_IP,VNH_2_MAC):
+    ip_mac_list={}
+    for vnh in VNH_2_IP:
+        #print VNH_2_IP[vnh],VNH_2_mac[vnh]
+        ip_mac_list[IPAddr(VNH_2_IP[vnh])]=EthAddr(VNH_2_mac[vnh])
+    return ip_mac_list
 
 ### Main ###
 def main():
     
     p=SDX_Policies()
-    ip_mac_list={IPAddr('172.0.0.172'): EthAddr('08:00:27:8b:e4:7b')}
+    ip_mac_list=getMacList(p.sdx.VNH_2_IP,p.sdx.VNH_2_mac)
+    print "ip_mac_list: ",ip_mac_list
+    #ip_mac_list={IPAddr('172.0.0.172'): EthAddr('08:00:27:8b:e4:7b')}
     return if_(ARP, arp(ip_mac_list), if_(BGP, identity, p)) >> mac_learner()
