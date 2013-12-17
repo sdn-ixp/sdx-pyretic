@@ -12,6 +12,7 @@
 #        Arpit Gupta (glex.qsd@gmail.com)
 #        Muhammad Shahbaz
 #        Laurent Vanbever
+#        Sean Donovan
 #
 #  Copyright notice:
 #        Copyright (C) 2012, 2013 Georgia Institute of Technology
