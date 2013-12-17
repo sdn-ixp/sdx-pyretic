@@ -403,6 +403,7 @@ def vnh_assignment(sdx,participants):
                 part_2_VNH[participant][vname]=prefix_set
                 count+=1
     print part_2_VNH
+    # TODO: Case where same participant has both inbound policies
     # Now deal with folks with best path policies
     for participant in part_2_prefix_updated:        
         for prefix_set in part_2_prefix_updated[participant]:
@@ -411,8 +412,9 @@ def vnh_assignment(sdx,participants):
                     if len(list(set(best_paths[participant][peer]).intersection(set(prefix_set))))>0:
                         vname=get_vname(prefix_set,part_2_VNH[peer])
                         part_2_VNH[participant][vname]=prefix_set   
-    
+    sdx.part_2_VNH=part_2_VNH
     fwd_map=get_fwdMap(part_2_VNH)
+    
     print part_2_VNH
     print VNH_2_IP
     print VNH_2_mac

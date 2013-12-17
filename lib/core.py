@@ -115,6 +115,7 @@ class SDX(object):
         self.peer_groups=peer_groups
         self.VNH_2_IP=VNH_2_IP
         self.VNH_2_mac=VNH_2_mac
+        self.part_2_VNH={}
         self.prefixes=prefixes
         self.port_2_participant=port_2_participant
         
@@ -312,10 +313,11 @@ def sdx_parse_policies(policy_file, sdx, participants):
     
     classifier=[]
     for participant_name in participants:
-        participants[participant_name].policies=post_VNH(participants[participant_name].policies,sdx,participant_name)        
-        start_comp=time.time()
-        classifier.append(participants[participant_name].policies.compile())
-        print participant_name, time.time() - start_comp, "seconds"
+        participants[participant_name].policies=post_VNH(participants[participant_name].policies,
+                                                         sdx,participant_name)        
+        #start_comp=time.time()
+        #classifier.append(participants[participant_name].policies.compile())
+        #print participant_name, time.time() - start_comp, "seconds"
 
     
 

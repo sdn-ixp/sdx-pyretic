@@ -66,25 +66,19 @@ class SDX_Policies(DynamicPolicy):
         self.sdx=base
         self.participants=participants 
         queue=Queue()  
-        
+        # Starting the thread to catch transition signals
         t1 = threading.Thread(target=self.transition_signal_catcher, args=(queue,))
         t1.daemon = True
-        t1.start() 
-        
-        
+        t1.start()         
+        # Starting the Quagga Interface thread
         t2 = threading.Thread(target=qI.main, args=(self.sdx,queue,))
         t2.daemon = True
         t2.start()
-        
-        
-        #thread.start_new_thread(qI.main(self.sdx,queue))  
-        
+       
         self.update_policy(True)
         #print "init test if policy None",self.__dict__
         print "Done with init"
         
-        
-
     def compose_policies(self,init):
         # Update the sdx and participant data structures
         # Get the VNH assignment
@@ -98,8 +92,7 @@ class SDX_Policies(DynamicPolicy):
             #self.policy.compile()
             #print "INIT: dict: ",self.__dict__
             print  'INIT: Aggregate Compilation',time.time() - start_comp, "seconds"
-            # return the composed policy set to Pyretic
-            #print "INIT: policy returned: ",self.policy            
+           
         
         else:
             self.policy=drop
@@ -107,12 +100,10 @@ class SDX_Policies(DynamicPolicy):
 
         print "Done with compose"
         return self.policy
-    
-    
+        
     def update_policy(self,init):
         self.policy=self.compose_policies (init)
     
-
     def transition_signal_catcher(self,queue):
         while 1:
             try:  
