@@ -14,6 +14,12 @@ from multiprocessing import Process, Queue
 from pyretic.sdx.lib.common import *
 from pyretic.sdx.lib.core import *
 
+participant_to_ebgp_nh_received1={
+        'A' : {'p1':'D','p2':'D','p3':'D','p4':'C','p5':'C','p6':'C'}
+    }
+participant_to_ebgp_nh_received2={
+        'A' : {'p1':'D','p2':'D','p3':'D','p4':'B','p5':'C','p6':'C'}
+    }
 
 
 def update_info(info1,info2):
@@ -65,14 +71,19 @@ def VNH_assignment(jmesg,sdx):
     
     return vnh_flag,jmesg_updated
 
-def process_json(message,sdx):
+def process_json(message,sdx,queue):
     print message
     jmesg=MyDecoder().decode(message)
     # Check this BGP Update for VNH assignment
     flag_vnh,jmesg_new=VNH_assignment(jmesg,sdx)
     if flag_vnh==True:
         print "BGP Update Modified with VNH Assignment"
-        print "New NH: ",jmesg_new.update.attr.nexthop    
+        print "New NH: ",jmesg_new.update.attr.nexthop 
+        if sdx.participant_to_ebgp_nh_received==participant_to_ebgp_nh_received1:
+            sdx.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received2
+        else:
+            sdx.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received1
+        queue.put('transition')
     # Update the rib with this new BGP Update    
     update_rib(jmesg_new,sdx)    
     return json.dumps(jmesg_new,cls=ComplexEncoder,
@@ -100,7 +111,7 @@ def main(sdx,queue):
                 conn.close()
                 break
             message = message + data
-            return_value = process_json(message,sdx)
+            return_value = process_json(message,sdx,queue)
             conn.sendall(return_value)
             print "Sent the message back"
 

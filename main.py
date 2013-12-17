@@ -105,13 +105,14 @@ class SDX_Policies(DynamicPolicy):
         self.policy=self.compose_policies (init)
     
     def transition_signal_catcher(self,queue):
+        print "Transition signal catcher called"
         while 1:
             try:  
                 line = queue.get(timeout=.1)
             except:
                 continue
             else: # Got line 
-                self.compose_policies(False)
+                self.update_policy(False)
        
 
 
