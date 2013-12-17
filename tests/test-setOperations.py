@@ -70,14 +70,14 @@ def getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes):
                 plist.append(prefix)
                 prefixes['p'+str(i)]=IPv4Network(prefix)
                 i+=1
-                if i%10000==0:
+                if i%1000==0:
                     print '...'
 
             if neighbor in prefixes_announced['pg1']:
                 prefixes_announced['pg1'][neighbor].append(prefix)
             else:
                 prefixes_announced['pg1'][neighbor]=[prefix]
-            if i%60000==0:
+            if i%10000==0:
                     break
     print "extracted data from file, prefixes: ",len(plist)
     # extract the unique prefixes announced
