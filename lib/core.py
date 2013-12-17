@@ -304,7 +304,7 @@ def sdx_parse_policies(policy_file, sdx, participants):
         participant.policies=pre_VNH(participant.policies,sdx,participant_name)
         #print "After pre: ",participant.policies
     #print sdx.out_var_to_port[u'outB_1'].id_  
-        
+       
     # Virtual Next Hop Assignment
     vnh_assignment(sdx,participants) 
     print "Completed VNH Assignment"
@@ -316,12 +316,7 @@ def sdx_parse_policies(policy_file, sdx, participants):
         start_comp=time.time()
         classifier.append(participants[participant_name].policies.compile())
         print participant_name, time.time() - start_comp, "seconds"
-    """
-    print classifier
-    base=None
-    for rule in classifier:
-        print rule
-    """
+
     
 
             

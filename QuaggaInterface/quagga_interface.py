@@ -9,6 +9,7 @@ import SocketServer
 import json
 from bgp_update import*
 from json_coders import*
+from multiprocessing import Process, Queue
 
 ## SDX-specific imports
 from pyretic.sdx.lib.common import *
@@ -184,7 +185,7 @@ def process_json(message,sdx_base):
     return json.dumps(jmesg_new,cls=ComplexEncoder,
             default=convert_to_builtin_type)
 
-def main(sdx_base):
+def main(sdx_base,queue):
     message = ''
     print "Quagga Interface Started"
     
