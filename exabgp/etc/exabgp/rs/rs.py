@@ -3,17 +3,15 @@
 #  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
 
 import sys
-sys.path.append(r'/usr/lib/eclipse/plugins/org.python.pydev_3.0.0.201311051910/pysrc')
-sys.path.append(r'~/sdx-platform/exabgp/etc/exabgp/rs')
+sys.path.append(r'/home/sdx/pyretic/pyretic/sdx/exabgp/etc/exabgp/rs')
 
-import pydevd
 import json
 from util import getArgs, write
 
-logfile = '/home/sdx/sdx-platform/exabgp/etc/exabgp/rs/rs.log'
+logfile = '/home/sdx/pyretic/pyretic/sdx/exabgp/etc/exabgp/rs/rs.log'
 log = open(logfile, "w")
 
-msgfile = '/home/sdx/sdx-platform/exabgp/etc/exabgp/rs/rs.msg'
+msgfile = '/home/sdx/pyretic/pyretic/sdx/exabgp/etc/exabgp/rs/rs.msg'
 msg = open(msgfile, "w")
 
 # Warning: when the parent dies we are seeing continual newlines, so we only access so many before stopping
@@ -35,9 +33,6 @@ while True:
 		
 		msg.write(line + '\n')
 		msg.flush()
-		
-		# Set debug point
-		pydevd.settrace()
 		
 		bgp_message = json.loads(line)
 		
