@@ -92,8 +92,7 @@ class SDX_Policies(DynamicPolicy):
             #self.policy.compile()
             #print "INIT: dict: ",self.__dict__
             print  'INIT: Aggregate Compilation',time.time() - start_comp, "seconds"
-           
-        
+                   
         else:
             self.policy=drop
             print "UPDATE: policy returned: ",self.policy 
