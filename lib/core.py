@@ -303,6 +303,7 @@ def sdx_parse_policies(policy_file, sdx, participants):
         print "Before pre",participant.policies
         # translate these policies for VNH Assignment
         participant.policies=pre_VNH(participant.policies,sdx,participant_name)
+        participant.original_policies=participant.policies
         #print "After pre: ",participant.policies
     #print sdx.out_var_to_port[u'outB_1'].id_  
        
@@ -319,7 +320,14 @@ def sdx_parse_policies(policy_file, sdx, participants):
         #classifier.append(participants[participant_name].policies.compile())
         #print participant_name, time.time() - start_comp, "seconds"
 
-    
 
-            
+def sdx_update_policies(sdx, participants):   
+    "Update the VNH Assignment"
+    for participant_name in participants:
+        participant=participants[participant_name]
+        participant.policies=participant.original_policies
+    update_vnh_assignment(sdx,participants)
+    for participant_name in participants:
+        participants[participant_name].policies=post_VNH(participants[participant_name].policies,
+                                                         sdx,participant_name)         
     
