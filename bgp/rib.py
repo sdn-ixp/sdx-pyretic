@@ -142,7 +142,7 @@ class rib():
         
         self.db.rollback()
     
-''' main '''    
+''' main '''     
 if __name__ == '__main__':
     
     myrib = rib()
