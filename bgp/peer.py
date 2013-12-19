@@ -60,6 +60,7 @@ class peer():
     def del_route(self,prefix):
         
         self.rib.delete(prefix)
+        self.rib.commit()
     
     def filter_route(self,item,value):
         
