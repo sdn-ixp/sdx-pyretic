@@ -4,7 +4,7 @@
 #############################################
 import sys,os
 import json
-
+sys.path.append(r'/home/sdx/pyretic/pyretic/sdx/QuaggaInterface')
 
 class MyDecoder(json.JSONDecoder):
     def __init__(self):
