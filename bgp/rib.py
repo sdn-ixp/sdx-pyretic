@@ -141,7 +141,22 @@ class rib():
     def rollback(self):
         
         self.db.rollback()
+
+    def decision_process(self,prefix):
+        # TODO: Proper Best Path Selection algorithm. This is the trivial version
+        routes = self.get(prefix)
+        
+        if (NULL != routes)
+            for route in routes
+                #TRIVIAL IMPLEMENTATION - returns the first route it encounters. 
+                #Where BPS magic should happen.
+                return route;
+        else
+            return NULL
+        
     
+
+
 ''' main '''     
 if __name__ == '__main__':
     

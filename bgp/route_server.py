@@ -19,12 +19,6 @@ class route_server():
         
         self.server = None
         
-    def decision_process(self):
-        
-        #TODO: add bgp decision process logic
-        
-        pass
-        
     def start(self):
         
         while True:
