@@ -32,6 +32,7 @@ if __name__ == '__main__':
         while True:
             try:
                 print server.recv()
+                server.send('announce route %s next-hop %s as-path [ %s ]' % ('200.0.0.0/16','172.0.0.1','100'))
             except:
                 print 'thread ended'
                 break
