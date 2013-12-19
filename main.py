@@ -70,13 +70,16 @@ class SDX_Policies(DynamicPolicy):
         t1 = threading.Thread(target=self.transition_signal_catcher, args=(queue,))
         t1.daemon = True
         t1.start()         
+       
+       
+        self.update_policy(True)
+        #print "init test if policy None",self.__dict__
+        
         # Starting the Quagga Interface thread
         t2 = threading.Thread(target=qI.main, args=(self.sdx,queue,))
         t2.daemon = True
         t2.start()
-       
-        self.update_policy(True)
-        #print "init test if policy None",self.__dict__
+        
         print "Done with init"
         
     def compose_policies(self,init):
@@ -95,7 +98,9 @@ class SDX_Policies(DynamicPolicy):
                    
         else:
             self.policy=drop
-            print "UPDATE: policy returned: ",self.policy 
+            sdx_update_policies(self.sdx, self.participants)
+            self.policy=sdx_platform(self.sdx)
+            #print "UPDATE: policy returned: ",self.policy 
 
         print "Done with compose"
         return self.policy

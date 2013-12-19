@@ -55,6 +55,7 @@ def update_rib(jmesg,sdx_base):
 
 def VNH_assignment(jmesg,sdx):
     print "VNH Assignment Called"
+    print "part_2_vnh: ",sdx.part_2_VNH
     vnh_flag=False
     jmesg_updated=jmesg
     prefix=IPv4Network(str(jmesg.prefix.address)+'/'+str(jmesg.prefix.prefixlen))
