@@ -42,6 +42,7 @@ from pyretic.sdx.lib.setOperation import *
 
 # General imports
 import os,sys
+from redis import Redis
 from ipaddr import IPv4Network
 pfile='data/ams-ix/amsix.map.ebgp.nh.prefixes.txt'
 hfile='data/ams-ix/amsix.map.ebgp.nh.nb.prefixes.txt'
@@ -110,11 +111,16 @@ def initializeData():
 def main():
     print "Starting the setOperations stress test"
     plist,prefixes,VNH_2_IP,prefixes_announced,part_2_prefix=initializeData()
+    
     print part_2_prefix.keys()
+    r0=Redis(db=0)
+    for participant in part_2_prefix:
+        r0.set(participant,part_2_prefix[participant])
+    r0.bgsave()
     print "Starting the set operation with following parameters:"
     print "# participants:",len(prefixes_announced['pg1'].keys()),", # prefixes:",len(plist)
     start_setops=time.time()
-    part_2_prefix_updated=prefix_decompose(part_2_prefix)
+    #part_2_prefix_updated=prefix_decompose(part_2_prefix)
     print "Execution Time: ",time.time()-start_setops,' seconds'
     
     
