@@ -36,25 +36,26 @@ def get_pdict(part_2_prefix):
     return dict.fromkeys(list(temp), '')
 
 def prefix_decompose(part_2_prefix):
-    pdict=get_pdict(part_2_prefix)
+    part_2_prefix_updated=part_2_prefix
+    pdict=get_pdict(part_2_prefix_updated)
     for key in pdict:
         #print key
         tempdict={}
-        for part in part_2_prefix:
+        for part in part_2_prefix_updated:
             #tempdict[part]=[]
             tlist=[]
-            for temp in part_2_prefix[part]:
+            for temp in part_2_prefix_updated[part]:
                 if key in temp:
                     tlist.append(temp)
             for elem in tlist:
-                part_2_prefix[part].remove(elem)
+                part_2_prefix_updated[part].remove(elem)
             if len(tlist)>0:
                 tempdict[part]=tlist
         decomposed_tempdict=decompose_set(tempdict)
         for part in decomposed_tempdict:
             for elem in decomposed_tempdict[part]:
-                part_2_prefix[part].append(elem)
-    return part_2_prefix
+                part_2_prefix_updated[part].append(elem)
+    return part_2_prefix_updated
 
 def get_prefixset(part_2_prefix):
     psetlist=[]
@@ -137,6 +138,65 @@ def lcs_parallel(part_2_prefix):
         p2p_updated=prefix_decompose(dict(d1.items()+lcs.items()))
         part_2_prefix_updated[part]=p2p_updated[part]
     return part_2_prefix
+
+def getLCS(part_2_prefix):
+    lcs_out=[]
+    for participant in part_2_prefix:
+        plist=part_2_prefix[participant]
+        for elem in plist:
+            lcs_out.append(frozenset(elem))
+    lcs_out=set(lcs_out)
+    lcs=[]
+    for elem in lcs_out:
+        lcs.append(list(elem))    
+    print 'lcs_out: ',lcs  
+    return lcs
+    
+    
+def lcs_recompute(p2p_old, p2p_new,part_2_prefix_updated):
+    p2p_updated={}
+    lcs_old=getLCS(part_2_prefix_updated)
+    p2p_updated['old']=lcs_old
+    affected_participants=[]
+    for participant in p2p_new:
+        pset_new=[]
+        pset_old=[]
+        plist_new=p2p_new[participant]
+        plist_old=p2p_old[participant]
+        #print 'plist',plist_new
+        for elem in plist_new:
+            #print frozenset(elem)
+            pset_new.append(frozenset(elem))
+        for elem in plist_old:
+            #print frozenset(elem)
+            pset_old.append(frozenset(elem))
+        pset_new=set(pset_new)
+        pset_old=set(pset_old)
+        print participant,set(pset_new)
+        print participant,set(pset_old)
+        pset_new=(pset_new.union(pset_old).difference(pset_old))
+        if len(pset_new)!=0:
+            print "Re-computation required for: ",participant
+            affected_participants.append(participant)
+            plist=[]
+            for elem in pset_new:
+                plist.append(list(elem))
+            p2p_updated[participant]=plist
+        
+        print participant,pset_new
+    print p2p_updated
+    prefix_decompose(p2p_updated)
+    for participant in part_2_prefix_updated:
+        tmp={}
+        if participant in affected_participants:
+            tmp['new']=p2p_updated['old']
+            tmp[participant]=part_2_prefix_updated[participant]
+            prefix_decompose(tmp)
+            p2p_updated[participant]=tmp[participant]
+        else:
+            p2p_updated[participant]=part_2_prefix_updated[participant]
+    p2p_updated.pop('old')
+    return p2p_updated
  
 if __name__ == '__main__':
     
@@ -147,18 +207,34 @@ if __name__ == '__main__':
     
     part_2_prefix= {'A': [['p1', 'p2', 'p3'], ['p3', 'p2'], ['p1']], 
       'C': [['p2', 'p3']], 'B': [['p2', 'p1'], ['p3']], 'D': [['p2', 'p3', 'p1']]}
-    
-    print "initial: ",part_2_prefix
+    part_2_prefix_old= {'A': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p3', 'p4', 'p5', 'p6'], ['p6', 'p4', 'p5'], ['p2', 'p3', 'p1']], 
+                        'C': [['p3', 'p6', 'p4', 'p5']],
+                        'B': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], ['p2', 'p3', 'p6']], 
+                        'D': [['p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
+    tmp= {'A': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p3', 'p4', 'p5', 'p6'], ['p6', 'p4', 'p5'], ['p2', 'p3', 'p1']], 
+                        'C': [['p3', 'p6', 'p4', 'p5']],
+                        'B': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], ['p2', 'p3', 'p6']], 
+                        'D': [['p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
+    part_2_prefix_new= {'A': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p3', 'p4', 'p5', 'p6'], ['p6', 'p5'], ['p4'], ['p2', 'p3', 'p1']], 
+                        'C': [['p3', 'p6', 'p5']], 
+                        'B': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], ['p2', 'p3', 'p6']], 
+                        'D': [['p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
+    print "old: ",part_2_prefix_old
+    print "new: ",part_2_prefix_new
+    part_2_prefix_updated=prefix_decompose(tmp)
+    #lcs_old=getLCS(part_2_prefix_updated)
+    part_2_prefix_recompute =lcs_recompute(part_2_prefix_old, part_2_prefix_new,part_2_prefix_updated)
+    print "final Recompute: ",part_2_prefix_recompute
     """
     #plist=[['c1'],['c1','c2'],['c1','c2','c3']]
     part_2_prefix_updated=prefix_decompose(part_2_prefix)
     
     print "final: ",part_2_prefix_updated
-    """
+    
     part_2_prefix_updated=lcs_parallel(part_2_prefix)
     
             
     print "final2 : ",part_2_prefix_updated
+    """
+
     
-    #newlist=find_intersection(plist)
-    #print newlist

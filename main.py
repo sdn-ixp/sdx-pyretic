@@ -65,20 +65,21 @@ class SDX_Policies(DynamicPolicy):
         (base,participants) = sdx_parse_config(cwd + '/pyretic/sdx/sdx_global.cfg')
         self.sdx=base
         self.participants=participants 
+        self.update_policy(True)
+        
         queue=Queue()  
         # Starting the thread to catch transition signals
         t1 = threading.Thread(target=self.transition_signal_catcher, args=(queue,))
         t1.daemon = True
-        t1.start()         
-       
-       
-        self.update_policy(True)
-        #print "init test if policy None",self.__dict__
+        t1.start()   
         
         # Starting the Quagga Interface thread
         t2 = threading.Thread(target=qI.main, args=(self.sdx,queue,))
         t2.daemon = True
         t2.start()
+        
+        # TODO: Explore if we thread (current) or Process makes more sense here,
+        # especially for BGP (Quagga Thread)
         
         print "Done with init"
         
@@ -131,5 +132,4 @@ def main():
     p=SDX_Policies()
     ip_mac_list=getMacList(p.sdx.VNH_2_IP,p.sdx.VNH_2_mac)
     print "ip_mac_list: ",ip_mac_list
-    #ip_mac_list={IPAddr('172.0.0.172'): EthAddr('08:00:27:8b:e4:7b')}
     return if_(ARP, arp(ip_mac_list), if_(BGP, identity, p)) >> mac_learner()
