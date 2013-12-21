@@ -377,9 +377,10 @@ def vnh_assignment(sdx,participants):
                         
     # Step 2 & 3
     print 'Before Set operations: ',participant_2_prefix
-    part_2_prefix_updated=prefix_decompose(participant_2_prefix)
+    part_2_prefix_updated,lcs=lcs_parallel(participant_2_prefix)
     print 'After Set operations: ',part_2_prefix_updated,sdx.part_2_prefix_old
     sdx.part_2_prefix_lcs=part_2_prefix_updated
+    sdx.lcs_old=lcs
     #----------------------------------------------------------------------------------------------------#
     
     
@@ -475,7 +476,7 @@ def update_vnh_assignment(sdx,participants):
     #----------------------------------------------------------------------------------------------------#
     print 'Before Set operations: ',participant_2_prefix
     #part_2_prefix_updated=prefix_decompose(participant_2_prefix)
-    part_2_prefix_updated=lcs_recompute(p2p_old,participant_2_prefix,sdx.part_2_prefix_lcs)
+    part_2_prefix_updated=lcs_recompute(p2p_old,participant_2_prefix,sdx.part_2_prefix_lcs,sdx.lcs_old)
     sdx.part_2_prefix_lcs=part_2_prefix_updated
     print "TEST: ",sdx.part_2_prefix_old
     print 'After Set operations: ',part_2_prefix_updated

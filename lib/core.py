@@ -120,6 +120,7 @@ class SDX(object):
         self.port_2_participant=port_2_participant
         self.part_2_prefix_old={}
         self.part_2_prefix_lcs={}
+        self.lcs_old=[]
         
     def get_participantName(self,ip):
         pname=''

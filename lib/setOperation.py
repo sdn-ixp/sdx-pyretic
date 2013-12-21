@@ -5,6 +5,22 @@
 import os,sys
 from multiprocessing import Process, Queue
 
+
+def get_pset(plist):
+    pset=[]
+    for elem in plist:
+        pset.append(frozenset(elem))
+    return set(pset)
+
+
+def get_pdict(part_2_prefix):
+    temp=set()
+    for part in part_2_prefix:
+        for plist in part_2_prefix[part]:
+            temp=temp.union(set(plist))
+    return dict.fromkeys(list(temp), '')
+
+
 def decompose_set(tdict):
     #print "tdict: %s" % (tdict)
     pmap=[]
@@ -12,7 +28,7 @@ def decompose_set(tdict):
         for lst in tdict[key]:
             pmap.append(set(lst))
     min_set=set.intersection(*pmap)
-    if len(list(min_set))>0:
+    if len(min_set)>0:
         for key in tdict:
             tlist=[list(min_set)]
             for lst in tdict[key]:           
@@ -22,18 +38,6 @@ def decompose_set(tdict):
             tdict[key]=tlist    
     return tdict
 
-def get_set(plists):
-    pset=[]
-    for plist in plists:
-        pset.append(set(plist))
-    return pset
-
-def get_pdict(part_2_prefix):
-    temp=set()
-    for part in part_2_prefix:
-        for plist in part_2_prefix[part]:
-            temp=temp.union(set(plist))
-    return dict.fromkeys(list(temp), '')
 
 def prefix_decompose(part_2_prefix):
     part_2_prefix_updated=part_2_prefix
@@ -57,26 +61,6 @@ def prefix_decompose(part_2_prefix):
                 part_2_prefix_updated[part].append(elem)
     return part_2_prefix_updated
 
-def get_prefixset(part_2_prefix):
-    psetlist=[]
-    for participant in part_2_prefix:
-        for plist in part_2_prefix[participant]:
-            if set(plist) not in psetlist:
-                psetlist.append(set(plist))
-    return psetlist
-
-def lcs2(s1,s2):
-    if len(s1)!=0:
-        intersect=s1.intersection(s2)
-        temp=[s1.difference(intersect),s2.difference(intersect),intersect]
-        lcs2_out=[]
-        for elem in temp:
-            if len(elem)!=0:
-                lcs2_out.append(elem)
-    else:
-        return [s2]            
-    return lcs2_out
-
 
 def decmopose_parallel(part_2_prefix,q=None,index=0):
     part_2_prefix_updated={}
@@ -85,59 +69,50 @@ def decmopose_parallel(part_2_prefix,q=None,index=0):
     tmp1={}
     tmp2={}
     if P==2:
-        print "P==2 called"
-        part_2_prefix_updated=prefix_decompose(part_2_prefix)
-        print part_2_prefix_updated
+        #print "P==2 called"
+        prefix_decompose(part_2_prefix)
+        #print part_2_prefix_updated
         ndict={}
         keys=part_2_prefix.keys()
         nkey=keys[0]+keys[1]
         ndict[nkey]=part_2_prefix[keys[0]]
         for plist in part_2_prefix[keys[1]]:
-            # this step can be improved and can be a possible performance bottleneck
-            if set(plist) not in get_set(ndict[nkey]):
+            # TODO: this step can be improved and can be a possible performance bottleneck
+            if set(plist) not in get_pset(ndict[nkey]):
                 ndict[nkey].append(plist)
-        print ndict
-        if q!=None:
-            q.put({index:ndict})
-        else:
-            return ndict
-        
+        #print ndict
+        return ndict        
     for i in range(1,P+1):
-        print i
         if i<=float(P)/2:
-            print partList[i],partList[P-i]
             tmp1[partList[i-1]]=part_2_prefix[partList[i-1]]
             tmp2[partList[P-i]]=part_2_prefix[partList[P-i]]
             i+=1
         else:
-            print 'tmp1:',tmp1
-            print 'tmp2:',tmp2
-            #processList=[]
-            #q=Queue()
-            #p1=(Process(target=decmopose_parallel, args=(tmp1,q,1)))
-            #p1.start
-            #d1=q.get()
-            #processList.append(Process(target=decmopose_parallel, args=(tmp2,q,2)))
             d1=decmopose_parallel(tmp1)
-            d2=decmopose_parallel(tmp2)
-            #p1.join()
-            
+            d2=decmopose_parallel(tmp2)    
             part_2_prefix_updated=decmopose_parallel(dict(d1.items()+d2.items()))
-            break
-        
+            break        
     return part_2_prefix_updated
     
 
 def lcs_parallel(part_2_prefix):
-    lcs=decmopose_parallel(part_2_prefix) 
+    # This step can be easily parallelized
+    for participant in part_2_prefix:
+        tmp={}
+        tmp[participant]=part_2_prefix[participant]
+        prefix_decompose(tmp)
+        part_2_prefix[participant]=tmp[participant]
+    print "After Participant Decompose: ",part_2_prefix
+    lcs=decmopose_parallel(part_2_prefix)     
     print "LCS: ",lcs
     part_2_prefix_updated={}
+    # This step can be easily parallelized
     for part in part_2_prefix:
         d1={}
         d1[part]=part_2_prefix[part]
         p2p_updated=prefix_decompose(dict(d1.items()+lcs.items()))
         part_2_prefix_updated[part]=p2p_updated[part]
-    return part_2_prefix
+    return part_2_prefix,lcs.values()[0]
 
 def getLCS(part_2_prefix):
     lcs_out=[]
@@ -152,28 +127,16 @@ def getLCS(part_2_prefix):
     print 'lcs_out: ',lcs  
     return lcs
     
-    
-def lcs_recompute(p2p_old, p2p_new,part_2_prefix_updated):
+   
+def lcs_recompute(p2p_old, p2p_new,part_2_prefix_updated,lcs_old=[]):
     p2p_updated={}
-    lcs_old=getLCS(part_2_prefix_updated)
+    if len(lcs_old)==0:
+        lcs_old=getLCS(part_2_prefix_updated)
     p2p_updated['old']=lcs_old
     affected_participants=[]
     for participant in p2p_new:
-        pset_new=[]
-        pset_old=[]
-        plist_new=p2p_new[participant]
-        plist_old=p2p_old[participant]
-        #print 'plist',plist_new
-        for elem in plist_new:
-            #print frozenset(elem)
-            pset_new.append(frozenset(elem))
-        for elem in plist_old:
-            #print frozenset(elem)
-            pset_old.append(frozenset(elem))
-        pset_new=set(pset_new)
-        pset_old=set(pset_old)
-        print participant,set(pset_new)
-        print participant,set(pset_old)
+        pset_new=get_pset(p2p_new[participant])
+        pset_old=get_pset(p2p_old[participant])
         pset_new=(pset_new.union(pset_old).difference(pset_old))
         if len(pset_new)!=0:
             print "Re-computation required for: ",participant
@@ -181,8 +144,7 @@ def lcs_recompute(p2p_old, p2p_new,part_2_prefix_updated):
             plist=[]
             for elem in pset_new:
                 plist.append(list(elem))
-            p2p_updated[participant]=plist
-        
+            p2p_updated[participant]=plist        
         print participant,pset_new
     print p2p_updated
     prefix_decompose(p2p_updated)
@@ -197,7 +159,8 @@ def lcs_recompute(p2p_old, p2p_new,part_2_prefix_updated):
             p2p_updated[participant]=part_2_prefix_updated[participant]
     p2p_updated.pop('old')
     return p2p_updated
- 
+        
+
 if __name__ == '__main__':
     
     # prefix list
@@ -219,22 +182,13 @@ if __name__ == '__main__':
                         'C': [['p3', 'p6', 'p5']], 
                         'B': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], ['p2', 'p3', 'p6']], 
                         'D': [['p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
+
+
     print "old: ",part_2_prefix_old
     print "new: ",part_2_prefix_new
-    part_2_prefix_updated=prefix_decompose(tmp)
-    #lcs_old=getLCS(part_2_prefix_updated)
-    part_2_prefix_recompute =lcs_recompute(part_2_prefix_old, part_2_prefix_new,part_2_prefix_updated)
+    part_2_prefix_updated,lcs=lcs_parallel(tmp)
+    part_2_prefix_recompute =lcs_recompute(part_2_prefix_old, part_2_prefix_new,part_2_prefix_updated,lcs)
     print "final Recompute: ",part_2_prefix_recompute
-    """
-    #plist=[['c1'],['c1','c2'],['c1','c2','c3']]
-    part_2_prefix_updated=prefix_decompose(part_2_prefix)
-    
-    print "final: ",part_2_prefix_updated
-    
-    part_2_prefix_updated=lcs_parallel(part_2_prefix)
-    
-            
-    print "final2 : ",part_2_prefix_updated
-    """
+
 
     
