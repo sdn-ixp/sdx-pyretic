@@ -21,6 +21,22 @@ participant_to_ebgp_nh_received2={
         'A' : {'p1':'D','p2':'D','p3':'D','p4':'B','p5':'C','p6':'C'}
     }
 
+prefixes_announced1={'pg1':{
+                               'A':['p0'],
+                               'B':['p1','p2','p3','p4','p6'],
+                               'C':['p3','p4','p5','p6'],
+                               'D':['p1','p2','p3','p4','p5','p6'],
+                               }
+                        }
+
+prefixes_announced2={'pg1':{
+                               'A':['p0'],
+                               'B':['p1','p2','p3','p4','p6'],
+                               'C':['p3','p5','p6'],
+                               'D':['p1','p2','p3','p4','p5','p6'],
+                               }
+                        }
+
 
 def update_info(info1,info2):
     # Make note of update replacing a previous entry
@@ -82,8 +98,10 @@ def process_json(message,sdx,queue):
         print "New NH: ",jmesg_new.update.attr.nexthop 
         if sdx.participant_to_ebgp_nh_received==participant_to_ebgp_nh_received1:
             sdx.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received2
+            sdx.prefixes_announced=prefixes_announced2
         else:
             sdx.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received1
+            sdx.prefixes_announced=prefixes_announced1
         queue.put('transition')
     # Update the rib with this new BGP Update    
     update_rib(jmesg_new,sdx)    

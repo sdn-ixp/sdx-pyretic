@@ -118,6 +118,8 @@ class SDX(object):
         self.part_2_VNH={}
         self.prefixes=prefixes
         self.port_2_participant=port_2_participant
+        self.part_2_prefix_old={}
+        self.part_2_prefix_lcs={}
         
     def get_participantName(self,ip):
         pname=''
@@ -321,11 +323,25 @@ def sdx_parse_policies(policy_file, sdx, participants):
         #print participant_name, time.time() - start_comp, "seconds"
 
 
-def sdx_update_policies(sdx, participants):   
+def sdx_update_policies(policy_file,sdx, participants):   
     "Update the VNH Assignment"
-    for participant_name in participants:
-        participant=participants[participant_name]
-        participant.policies=participant.original_policies
+    sdx_policies = json.load(open(policy_file, 'r'))  
+    ''' 
+        Get participants policies
+    '''
+    for participant_name in sdx_policies:
+        participant = participants[participant_name]
+        policy_modules = [import_module(sdx_policies[participant_name][i]) 
+                          for i in range(0, len(sdx_policies[participant_name]))]
+        
+        participant.policies = parallel([
+             policy_modules[i].policy(participant, sdx) 
+             for i in range(0, len(sdx_policies[participant_name]))])  
+        print "Before pre",participant.policies
+        # translate these policies for VNH Assignment
+        participant.policies=pre_VNH(participant.policies,sdx,participant_name)
+        participant.original_policies=participant.policies
+    
     update_vnh_assignment(sdx,participants)
     for participant_name in participants:
         participants[participant_name].policies=post_VNH(participants[participant_name].policies,

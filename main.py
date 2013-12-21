@@ -99,7 +99,7 @@ class SDX_Policies(DynamicPolicy):
                    
         else:
             self.policy=drop
-            sdx_update_policies(self.sdx, self.participants)
+            sdx_update_policies(cwd + '/pyretic/sdx/sdx_policies.cfg',self.sdx, self.participants)
             self.policy=sdx_platform(self.sdx)
             #print "UPDATE: policy returned: ",self.policy 
 

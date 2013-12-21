@@ -118,6 +118,7 @@ def get_prefix(policy,plist,pfxlist,part,pa,acc=[]):
             if len(acc)==0:
                 peer=get_fwdPeer(plist[part],policy.outport)
                 acc=pa['pg1'][peer]
+                print peer,acc
             pfxlist.append(acc)   
     return pfxlist,acc
 
@@ -368,13 +369,17 @@ def vnh_assignment(sdx,participants):
     for participant in best_paths:
         participant_2_prefix[participant]=participant_2_prefix[participant]+best_paths[participant].values()        
     #----------------------------------------------------------------------------------------------------#
-
     
+    
+    ## Update the sdx part_2_prefix_old data structure, it will be used in VNH recompute
+    for participant in participant_2_prefix:
+        sdx.part_2_prefix_old[participant]=tuple(participant_2_prefix[participant])
+                        
     # Step 2 & 3
-    #participant_2_prefix={'A':[PB,PC,PA1,PA2],'B':[PB,['p1'],['p4']],'C':[PC],'D':[PD]}
     print 'Before Set operations: ',participant_2_prefix
     part_2_prefix_updated=prefix_decompose(participant_2_prefix)
-    print 'After Set operations: ',part_2_prefix_updated
+    print 'After Set operations: ',part_2_prefix_updated,sdx.part_2_prefix_old
+    sdx.part_2_prefix_lcs=part_2_prefix_updated
     #----------------------------------------------------------------------------------------------------#
     
     
@@ -453,17 +458,28 @@ def update_vnh_assignment(sdx,participants):
     # 2. Get the participant_2_prefix data structure from participant's policies
     best_paths=get_bestPaths(participant_to_ebgp_nh_received)
     print 'Updated best_paths: ',best_paths
+    print "prefixes_announced: ",sdx.prefixes_announced
     participant_2_prefix=get_part2prefixes(participants_policies,participant_list,prefixes_announced)
+    print "p2p: ",participant_2_prefix
     # Add the prefixes for default forwarding policies now
     for participant in best_paths:
         participant_2_prefix[participant]=participant_2_prefix[participant]+best_paths[participant].values()        
     #----------------------------------------------------------------------------------------------------#
-    
+    tmp_old={}
+    p2p_old={}
+    for participant in participant_2_prefix:
+        tmp_old[participant]=tuple(participant_2_prefix[participant])
+        p2p_old[participant]=list(sdx.part_2_prefix_old[participant])
+    sdx.part_2_prefix_old=tmp_old
     # Step 2 & 3
     #----------------------------------------------------------------------------------------------------#
     print 'Before Set operations: ',participant_2_prefix
-    part_2_prefix_updated=prefix_decompose(participant_2_prefix)
+    #part_2_prefix_updated=prefix_decompose(participant_2_prefix)
+    part_2_prefix_updated=lcs_recompute(p2p_old,participant_2_prefix,sdx.part_2_prefix_lcs)
+    sdx.part_2_prefix_lcs=part_2_prefix_updated
+    print "TEST: ",sdx.part_2_prefix_old
     print 'After Set operations: ',part_2_prefix_updated
+    
     #----------------------------------------------------------------------------------------------------#
         
     # Step 4: Assign VNHs
@@ -490,6 +506,7 @@ def update_vnh_assignment(sdx,participants):
                         VNH_2_mac[vname]=new_mac
                 part_2_VNH[participant][vname]=prefix_set
                 count+=1
+                
     print part_2_VNH
     # TODO: Case where same participant has both inbound policies
     # Now deal with folks with best path policies
@@ -499,7 +516,8 @@ def update_vnh_assignment(sdx,participants):
                 for peer in best_paths[participant]:
                     if len(list(set(best_paths[participant][peer]).intersection(set(prefix_set))))>0:
                         vname=get_vname(prefix_set,part_2_VNH[peer])
-                        part_2_VNH[participant][vname]=prefix_set   
+                        part_2_VNH[participant][vname]=prefix_set 
+                          
     sdx.part_2_VNH=part_2_VNH
     fwd_map=get_fwdMap(part_2_VNH)
     
