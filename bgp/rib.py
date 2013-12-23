@@ -6,16 +6,17 @@ import sqlite3
 
 class rib():
     
-    def __init__(self):
+    def __init__(self, name):
         
         # Create a database in RAM
         self.db = sqlite3.connect(':memory:')
         self.db.row_factory = sqlite3.Row
+        self.name = name
         
         # Get a cursor object
         cursor = self.db.cursor()
         cursor.execute('''
-                        create table rib (prefix text primary key, next_hop text,
+                        create table ''' + self.name + ''' (prefix text, next_hop text,
                                origin text, as_path text, med integer, atomic_aggregate boolean)
         ''')
        
@@ -27,66 +28,51 @@ class rib():
         
     def __setitem__(self,key,item): 
         
-        cursor = self.db.cursor()
-        
-        if (isinstance(item,tuple)):
-            cursor.execute('''insert into rib (prefix, next_hop, origin, as_path, med,
-                        atomic_aggregate) values(?,?,?,?,?,?)''', 
-                        (key,item[0],item[1],item[2],item[3],item[4]))
-        elif (isinstance(item,list)):
-            cursor.execute('''insert into rib (prefix, next_hop, origin, as_path, med,
-                        atomic_aggregate) values(?,?,?,?,?,?)''', 
-                        (key,item[0],item[1],item[2],item[3],item[4]))
-        elif (isinstance(item,dict)):
-            cursor.execute('''insert into rib (prefix, next_hop, origin, as_path, med,
-                        atomic_aggregate) values(?,?,?,?,?,?)''', 
-                        (key,item['next_hop'],item['origin'],item['as_path'],item['med'],
-                         item['atomic_aggregate']))
-            
-            #TODO: Add support for selective update
+        self.add(key,item)
         
     def __getitem__(self,key): 
             
-        cursor = self.db.cursor()
-        cursor.execute('''select next_hop, origin, as_path, med, atomic_aggregate 
-                        from rib where prefix = ?''', (key,))
-        
-        return cursor.fetchone()
+        return self.get(key)
         
     def add(self,key,item):
         
         cursor = self.db.cursor()
         
         if (isinstance(item,tuple) or isinstance(item,list)):
-            cursor.execute('''insert into rib (prefix, next_hop, origin, as_path, med,
+            cursor.execute('''insert into ''' + self.name + ''' (prefix, next_hop, origin, as_path, med,
                         atomic_aggregate) values(?,?,?,?,?,?)''', 
                         (key,item[0],item[1],item[2],item[3],item[4]))
-        elif (isinstance(item,dict)):
-            cursor.execute('''insert into rib (prefix, next_hop, origin, as_path, med,
+        elif (isinstance(item,dict) or isinstance(item,sqlite3.Row)):
+            cursor.execute('''insert into ''' + self.name + ''' (prefix, next_hop, origin, as_path, med,
                         atomic_aggregate) values(?,?,?,?,?,?)''', 
                         (key,item['next_hop'],item['origin'],item['as_path'],item['med'],
                          item['atomic_aggregate']))
+            
+        #TODO: Add support for selective update
             
     def add_many(self,items):
         
         cursor = self.db.cursor()
         
         if (isinstance(items,list)):
-            cursor.execute('''insert into rib (prefix, next_hop, origin, as_path, med,
+            cursor.execute('''insert into ''' + self.name + ''' (prefix, next_hop, origin, as_path, med,
                         atomic_aggregate) values(?,?,?,?,?,?)''', items)
             
     def get(self,key): 
             
         cursor = self.db.cursor()
-        cursor.execute('''select next_hop, origin, as_path, med, atomic_aggregate 
-                        from rib where prefix = ?''', (key,))
+        cursor.execute('''select * from ''' + self.name + ''' where prefix = ?''', (key,))
         
         return cursor.fetchone()
     
-    def get_all(self): 
+    def get_all(self,key=None): 
             
         cursor = self.db.cursor()
-        cursor.execute('''select * from rib''')
+        
+        if (key is not None):
+            cursor.execute('''select * from ''' + self.name + ''' where prefix = ?''', (key,))
+        else:
+            cursor.execute('''select * from ''' + self.name)
         
         return cursor.fetchall()
     
@@ -94,7 +80,7 @@ class rib():
             
         cursor = self.db.cursor()
         
-        script = "select * from rib where " + item + " like '%" + value + "%'"
+        script = "select * from " + self.name + " where " + item + " like '%" + value + "%'"
         
         cursor.execute(script)
         
@@ -104,7 +90,7 @@ class rib():
         
         cursor = self.db.cursor()
         
-        script = "update rib set " + item + " = '" + value + "' where prefix = '" + key + "'"
+        script = "update " + self.name + " set " + item + " = '" + value + "' where prefix = '" + key + "'"
         
         cursor.execute(script)
             
@@ -113,26 +99,29 @@ class rib():
         cursor = self.db.cursor()
         
         if (isinstance(item,tuple) or isinstance(item,list)):
-            cursor.execute('''update rib set next_hop = ?, origin = ?, as_path = ?,
+            cursor.execute('''update ''' + self.name + ''' set next_hop = ?, origin = ?, as_path = ?,
                             med = ?, atomic_aggregate = ? where prefix = ?''',
                             (item[0],item[1],item[2],item[3],item[4],key))
-        elif (isinstance(item,dict)):
-            cursor.execute('''update rib set next_hop = ?, origin = ?, as_path = ?,
+        elif (isinstance(item,dict) or isinstance(item,sqlite3.Row)):
+            cursor.execute('''update ''' + self.name + ''' set next_hop = ?, origin = ?, as_path = ?,
                             med = ?, atomic_aggregate = ? where prefix = ?''', 
                             (item['next_hop'],item['origin'],item['as_path'],item['med'],
                              item['atomic_aggregate'],key))
         
     def delete(self,key):
         
+        # TODO: Add more granularity in the delete process i.e., instead of just prefix, 
+        # it should be based on a conjunction of other attributes too.
+        
         cursor = self.db.cursor()
         
-        cursor.execute('''delete from rib where prefix = ?''', (key,))
+        cursor.execute('''delete from ''' + self.name + ''' where prefix = ?''', (key,))
         
     def delete_all(self):
         
         cursor = self.db.cursor()
         
-        cursor.execute('''delete from rib''')
+        cursor.execute('''delete from ''' + self.name)
     
     def commit(self):
         
@@ -141,21 +130,6 @@ class rib():
     def rollback(self):
         
         self.db.rollback()
-
-    def decision_process(self,prefix):
-        # TODO: Proper Best Path Selection algorithm. This is the trivial version
-        routes = self.get(prefix)
-        
-        if (NULL != routes)
-            for route in routes
-                #TRIVIAL IMPLEMENTATION - returns the first route it encounters. 
-                #Where BPS magic should happen.
-                return route;
-        else
-            return NULL
-        
-    
-
 
 ''' main '''     
 if __name__ == '__main__':
