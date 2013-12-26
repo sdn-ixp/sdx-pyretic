@@ -29,14 +29,17 @@ def generate_part_2_prefix(npart,npfx,ntot):
 
 def main():
     print "Starting the test with dummy prefixes"
-    nParticipant=4
-    nPrefix_per_set=6
+    nParticipant=20
+    nPrefix_per_set=100
     total_prefixes=(nParticipant-1)*nPrefix_per_set
     part_2_prefix=generate_part_2_prefix(nParticipant,nPrefix_per_set,total_prefixes)
-    print part_2_prefix
+    #print part_2_prefix
+    print "started"
     #prefix_decompose(part_2_prefix)
+    #lcs_parallel(part_2_prefix)
     lcs_multiprocess(part_2_prefix)
-    print part_2_prefix
+    print "Completed"
+    #print part_2_prefix
     
 if __name__ == '__main__':
     
