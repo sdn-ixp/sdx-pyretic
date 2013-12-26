@@ -25,14 +25,20 @@ class bgp_server():
 ''' sender '''
 def _sender(conn,queue):
     while True:
-        line = queue.get()
-        conn.send(line)
+        try:
+            line = queue.get()
+            conn.send(line)
+        except:
+            pass
         
 ''' receiver '''
 def _receiver(conn,queue):
     while True:
-        line = conn.recv()
-        queue.put(line)
+        try:
+            line = conn.recv()
+            queue.put(line)
+        except:
+            pass
 
 ''' main '''	
 if __name__ == '__main__':
