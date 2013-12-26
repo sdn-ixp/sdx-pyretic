@@ -110,6 +110,9 @@ class rib():
         
     def delete(self,key):
         
+        # TODO: Add more granularity in the delete process i.e., instead of just prefix, 
+        # it should be based on a conjunction of other attributes too.
+        
         cursor = self.db.cursor()
         
         cursor.execute('''delete from ''' + self.name + ''' where prefix = ?''', (key,))
