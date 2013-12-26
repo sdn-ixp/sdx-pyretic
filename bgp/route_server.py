@@ -20,18 +20,17 @@ class route_server():
         self.server = None
         
     def start(self):
-        
-        while True:
-            self.server = bgp_server()
+        self.server = bgp_server()
     
-            while True:
-                try:
-                    route = self.server.recv()
-                    for peer in self.peers:
-                        self.peers[peer].add_route(route)
-                except:
-                    print 'route_serer_error: thread ended'
-                    break
+        while True:
+            try:
+                route = self.server.receiver_queue.get()
+                
+                for peer in self.peers:
+                    self.peers[peer].update(route,self.server.sender_queue)
+            except:
+                print 'route_serer_error: thread ended'
+                break
     
 ''' main '''    
 if __name__ == '__main__':

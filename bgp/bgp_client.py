@@ -3,8 +3,6 @@
 #  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
 
 import sys
-import os
-import getopt
 from threading import Thread
 from multiprocessing.connection import Client
 sys.path.append(r'/home/sdx/pyretic/pyretic/sdx/bgp')
@@ -35,10 +33,7 @@ def _sender(conn,stdin,log):
 			#log.write(line + '\n')
 			#log.flush()
 		
-		except KeyboardInterrupt:
-			pass
-		except IOError:
-			# most likely a signal during readline
+		except:
 			pass
 	
 ''' Receiver function '''
@@ -53,14 +48,11 @@ def _receiver(conn,stdout,log):
 			
 			_write(stdout, line) 
 			''' example: announce route 1.2.3.4 next-hop 5.6.7.8 as-path [ 100 200 ] '''
-            			
+			
 			#log.write(line + '\n')
 			#log.flush()
 		
-		except KeyboardInterrupt:
-			pass
-		except IOError:
-			# most likely a signal during readline
+		except:
 			pass
 
 ''' main '''	
@@ -73,7 +65,7 @@ if __name__ == '__main__':
 	
 	sender = Thread(target=_sender, args=(conn,sys.stdin,log))
 	sender.start()
-    
+
 	receiver = Thread(target=_receiver, args=(conn,sys.stdout,log))
 	receiver.start()
 	
