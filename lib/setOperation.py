@@ -6,6 +6,7 @@ import os,sys
 from multiprocessing import Process, Queue
 import multiprocessing as mp
 import cProfile
+from math import *
 multiprocess=True
 
 debug=False
@@ -266,6 +267,10 @@ def decompose_simpler_multi(part_2_prefix,q=None):
 def decompose_multi(part_2_prefix,q=None,index=0):
     partList=part_2_prefix.keys()
     P=len(partList)
+    Np=mp.cpu_count()
+    if Np==1:
+        Np=8 #dummy value
+    
     print "Started, len: ",P,part_2_prefix.keys()
     if P==2:
         ndict={}
@@ -303,16 +308,23 @@ def decompose_multi(part_2_prefix,q=None,index=0):
         qout=[]
         if (debug==True):
             print tmp[0],tmp[1]
-        for i in range(2):
-            queue.append(Queue()) 
-            process.append(Process(target=decompose_multi, args=(tmp[i],queue[i])))
-            process[i].start()
-            print "Started: ",process[i]
-        for i in range(2):
-            print "Waiting for: ",process[i],i
-            qout.append(queue[i].get())
-            process[i].join()
-            print "Joined: ",process[i],i
+        print "index: ",index
+        if index>0 and index<=log(Np)/log(2):
+            index+=1
+            for i in range(2):
+                queue.append(Queue()) 
+                process.append(Process(target=decompose_multi, args=(tmp[i],queue[i],index)))
+                process[i].start()
+                print "Started: ",process[i]
+            for i in range(2):
+                print "Waiting for: ",process[i],i
+                qout.append(queue[i].get())
+                process[i].join()
+                print "Joined: ",process[i],i
+        else:
+            print "New process not spawned, index: ",index
+            for p2p in tmp:
+                qout.append(decompose_multi(p2p))
               
         lcs=decompose_multi(dict(qout[0].items()+qout[1].items()))  
         print "Completed, len: ",P,part_2_prefix.keys() 
@@ -326,33 +338,45 @@ def decompose_multi(part_2_prefix,q=None,index=0):
 
     
 def lcs_multiprocess(part_2_prefix):
-    lcs=decompose_multi(part_2_prefix)     
+    lcs=decompose_multi(part_2_prefix,index=1)     
     part_2_prefix_updated={}
-    queue=[]
-    process=[]
-    i=0
-    for part in part_2_prefix:
-        d1={}
-        d1[part]=part_2_prefix[part]
-        tmp=dict(d1.items()+lcs.items())
-        if (debug==True):
-            print "d1: ",d1
-            print "lcs: ",lcs
-            print "tmp: ",tmp
-        queue.append(Queue())
-        process.append(Process(target=decompose_simpler_multi, args=(tmp,queue[i])))
-        process[i].start()
-        print "Started1: ",process[i]
-        i+=1
-    i=0
-    for part in part_2_prefix:
-        print "Waiting1 for: ",process[i],i
-        tmp,x=queue[i].get()
-        process[i].join()
-        print "Joined1: ",process[i],i
-        
-        part_2_prefix_updated[part]=tmp[part]
-        i+=1
+
+    Np=mp.cpu_count()
+    if Np==1:
+        Np=8 #dummy value
+    parts=part_2_prefix.keys()
+    for k in range(0,int(ceil(float(len(parts))/Np))):        
+        queue=[]
+        process=[]
+        for i in range(0,Np):
+            if k*Np+i>=len(parts):
+                break
+            else:
+                print k,i
+                d1={}
+                part=parts[k*Np+i]
+                d1[part]=part_2_prefix[part]
+                tmp=dict(d1.items()+lcs.items())
+                if (debug==True):
+                    print "d1: ",d1
+                    print "lcs: ",lcs
+                    print "tmp: ",tmp
+                queue.append(Queue())
+                process.append(Process(target=decompose_simpler_multi, args=(tmp,queue[i])))
+                process[i].start()
+                print "Started1: ",process[i]
+        for i in range(0,Np):
+            if k*Np+i>=len(parts):
+                break
+            else:
+                print k,i
+                print "Waiting1 for: ",process[i],i
+                part=parts[k*Np+i]
+                tmp,x=queue[i].get()
+                process[i].join()
+                print "Joined1: ",process[i],i            
+                part_2_prefix_updated[part]=tmp[part]
+
     if (debug==True):
         print "Final LCS: ",lcs
         print "Final P2P: ",part_2_prefix_updated

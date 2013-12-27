@@ -29,8 +29,8 @@ def generate_part_2_prefix(npart,npfx,ntot):
 
 def main():
     print "Starting the test with dummy prefixes"
-    nParticipant=20
-    nPrefix_per_set=100
+    nParticipant=32
+    nPrefix_per_set=1000
     total_prefixes=(nParticipant-1)*nPrefix_per_set
     part_2_prefix=generate_part_2_prefix(nParticipant,nPrefix_per_set,total_prefixes)
     #print part_2_prefix
