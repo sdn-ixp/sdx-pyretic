@@ -122,8 +122,9 @@ class SDX_Policies(DynamicPolicy):
 def getMacList(VNH_2_IP,VNH_2_MAC):
     ip_mac_list={}
     for vnh in VNH_2_IP:
-        #print VNH_2_IP[vnh],VNH_2_mac[vnh]
-        ip_mac_list[IPAddr(VNH_2_IP[vnh])]=EthAddr(VNH_2_mac[vnh])
+        if vnh != 'VNH':
+            print VNH_2_IP[vnh],VNH_2_mac[vnh]            
+            ip_mac_list[IPAddr(VNH_2_IP[vnh])]=EthAddr(VNH_2_mac[vnh])
     return ip_mac_list
 
 ### Main ###

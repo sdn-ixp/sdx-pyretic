@@ -48,6 +48,7 @@ from pyretic.sdx.lib.vnhAssignment import *
 import json
 from importlib import import_module
 from ipaddr import IPv4Network
+from netaddr import *
 ###
 ### SDX classes
 ###
@@ -78,9 +79,11 @@ participant_to_ebgp_nh_received = {
     }
 
 peer_groups={'pg1':[1,2,3,4]}
-VNH_2_IP={'VNHB':'172.0.0.126','VNHC':'172.0.0.151','VNHA':'172.0.0.101','VNHD':'172.0.0.176'}
-VNH_2_mac={'VNHA':'A1:A1:A1:A1:A1:00','VNHC':'C1:C1:C1:C1:C1:00','VNHB':'B1:B1:B1:B1:B1:00',
-               'VNHD':'D1:D1:D1:D1:D1:00'}
+VNH_2_IP={'VNH':'172.0.0.0/28'}
+VNH_2_mac={'VNH':'AA:00:00:00:00:00'}
+#VNH_2_IP={'VNHB':'172.0.0.126','VNHC':'172.0.0.151','VNHA':'172.0.0.101','VNHD':'172.0.0.176'}
+#VNH_2_mac={'VNHA':'A1:A1:A1:A1:A1:00','VNHC':'C1:C1:C1:C1:C1:00','VNHB':'B1:B1:B1:B1:B1:00',
+#               'VNHD':'D1:D1:D1:D1:D1:00'}
     
 prefixes={'p1':IPv4Network('11.0.0.0/24'),
           'p2':IPv4Network('12.0.0.0/24'),
@@ -307,7 +310,7 @@ def sdx_parse_policies(policy_file, sdx, participants):
         # translate these policies for VNH Assignment
         participant.policies=pre_VNH(participant.policies,sdx,participant_name)
         participant.original_policies=participant.policies
-        #print "After pre: ",participant.policies
+        print "After pre: ",participant.policies
     #print sdx.out_var_to_port[u'outB_1'].id_  
        
     # Virtual Next Hop Assignment
@@ -319,6 +322,7 @@ def sdx_parse_policies(policy_file, sdx, participants):
     for participant_name in participants:
         participants[participant_name].policies=post_VNH(participants[participant_name].policies,
                                                          sdx,participant_name)        
+        print "After Post VNH: ",participants[participant_name].policies
         #start_comp=time.time()
         #classifier.append(participants[participant_name].policies.compile())
         #print participant_name, time.time() - start_comp, "seconds"
@@ -341,6 +345,7 @@ def sdx_update_policies(policy_file,sdx, participants):
         print "Before pre",participant.policies
         # translate these policies for VNH Assignment
         participant.policies=pre_VNH(participant.policies,sdx,participant_name)
+        
         participant.original_policies=participant.policies
     
     update_vnh_assignment(sdx,participants)

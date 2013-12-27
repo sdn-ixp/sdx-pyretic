@@ -380,7 +380,7 @@ def lcs_multiprocess(part_2_prefix):
     if (debug==True):
         print "Final LCS: ",lcs
         print "Final P2P: ",part_2_prefix_updated
-    return part_2_prefix,lcs.values()[0]
+    return part_2_prefix_updated,lcs.values()[0]
 
 
 
