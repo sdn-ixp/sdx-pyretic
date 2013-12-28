@@ -7,7 +7,7 @@ from multiprocessing import Queue
 from multiprocessing.connection import Listener
 
 ''' bgp server '''
-class bgp_server():
+class server():
     
     def __init__(self):
         listener = Listener(('localhost', 6000), authkey='sdx')
@@ -43,7 +43,7 @@ def _receiver(conn,queue):
 ''' main '''	
 if __name__ == '__main__':
     while True:
-        server = bgp_server()
+        server = server()
     
         while True:
             try:

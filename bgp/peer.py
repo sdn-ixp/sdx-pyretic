@@ -16,8 +16,6 @@ class peer():
                     "local": rib("local")}
          
     def update(self,route,queue):
-        
-        route = json.loads(route)
 
         origin = None
         as_path = None

@@ -60,7 +60,7 @@ def update_rib(jmesg,sdx_base):
     for participant in sdx_base.participants:
         if participant.id_ in neighbor_list:
             #print "update: ",participant.id_
-            if prefix_curr not in participant.rib:
+            if prefix_curr not in participant.rib: # There is some issue here, all participants have a same pointer to the RIB - MS
                 participant.rib[prefix_curr]={}
             elif peer_curr in participant.rib[prefix_curr]:
                 info1=participant.rib[prefix_curr][peer_curr]
@@ -80,15 +80,17 @@ def VNH_assignment(jmesg,sdx):
         if sdx.prefixes[pfx]==prefix:
             prefix_str=pfx
     announcer=sdx.get_participantName(jmesg.update.peer).encode('ascii','ignore')
-    for vnh in sdx.part_2_VNH[announcer]:
-        if prefix_str in sdx.part_2_VNH[announcer][vnh]:
-            vnh_flag=True
-            jmesg_updated.update.attr.nexthop=VNH_2_IP[vnh]
-            print "VNH Selected: ",vnh
+    
+    if (announcer in sdx.part_2_VNH):
+        for vnh in sdx.part_2_VNH[announcer]:
+            if prefix_str in sdx.part_2_VNH[announcer][vnh]:
+                vnh_flag=True
+                jmesg_updated.update.attr.nexthop=VNH_2_IP[vnh]
+                print "VNH Selected: ",vnh
     
     return vnh_flag,jmesg_updated
 
-def process_json(message,sdx,queue):
+def process_json(message,sdx,event):
     print message
     jmesg=MyDecoder().decode(message)
     # Check this BGP Update for VNH assignment
@@ -102,13 +104,14 @@ def process_json(message,sdx,queue):
         else:
             sdx.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received1
             sdx.prefixes_announced=prefixes_announced1
-        queue.put('transition')
+        event.set()
+            
     # Update the rib with this new BGP Update    
     update_rib(jmesg_new,sdx)    
     return json.dumps(jmesg_new,cls=ComplexEncoder,
             default=convert_to_builtin_type)
 
-def main(sdx,queue):
+def main(event,sdx):
     message = ''
     print "Quagga Interface Started"
     print "best path info",sdx.participant_to_ebgp_nh_received
@@ -130,7 +133,7 @@ def main(sdx,queue):
                 conn.close()
                 break
             message = message + data
-            return_value = process_json(message,sdx,queue)
+            return_value = process_json(message,sdx,event)
             conn.sendall(return_value)
             print "Sent the message back"
 
