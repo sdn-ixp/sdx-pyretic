@@ -104,8 +104,7 @@ def process_json(message,sdx,event):
         else:
             sdx.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received1
             sdx.prefixes_announced=prefixes_announced1
-    
-            event.set()
+        event.set()
             
     # Update the rib with this new BGP Update    
     update_rib(jmesg_new,sdx)    
