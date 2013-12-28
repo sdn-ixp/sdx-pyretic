@@ -58,7 +58,7 @@ def _receiver(conn,stdout,log):
 ''' main '''	
 if __name__ == '__main__':
 	
-	logfile = '/home/sdx/pyretic/pyretic/sdx/bgp/bgp-client.log'
+	logfile = '/home/sdx/pyretic/pyretic/sdx/bgp/client.log'
 	log = open(logfile, "w")
 		
 	conn = Client(('localhost', 6000), authkey='sdx')
