@@ -36,7 +36,7 @@
 
 ## General imports
 import os
-from threading import Thread
+from threading import Thread,Event
 from multiprocessing import Process,Queue
 
 ## Pyretic-specific imports
@@ -47,84 +47,75 @@ from pyretic.modules.mac_learner import *
 ## SDX-specific imports
 from pyretic.sdx.utils import *
 from pyretic.sdx.utils.arp import *
+from pyretic.sdx.utils.inet import *
 from pyretic.sdx.lib.core import *
+
 import pyretic.sdx.QuaggaInterface.quagga_interface as qI
 
-
+''' Get current working directory ''' 
 cwd = os.getcwd()
 
-BGP_PORT = 179
-BGP = match(srcport=BGP_PORT) | match(dstport=BGP_PORT)
-
-class SDX_Policies(DynamicPolicy):
+class sdx_policy(DynamicPolicy):
     """Standard MAC-learning logic"""
     def __init__(self):
-        print "SDX init called"
-        super(SDX_Policies,self).__init__()
+        
+        print "Initialize SDX"
+        super(sdx_policy,self).__init__()
+        
         print "SDX:",self.__dict__
-        (base,participants) = sdx_parse_config(cwd + '/pyretic/sdx/sdx_global.cfg')
-        self.sdx=base
-        self.participants=participants 
-        self.update_policy(True)
         
-        queue=Queue()  
-        # Starting the thread to catch transition signals
-        t1 = Thread(target=self.transition_signal_catcher, args=(queue,))
-        t1.daemon = True
-        t1.start()   
+        (self.base,self.participants)=sdx_parse_config(cwd+'/pyretic/sdx/sdx_global.cfg')
         
-        # Starting the Quagga Interface thread
-        t2 = Thread(target=qI.main, args=(self.sdx,queue,))
-        t2.daemon = True
-        t2.start()
+        ''' Get updated policy'''
+        self.update_policy()
         
-        # TODO: Explore if we thread (current) or Process makes more sense here,
-        # especially for BGP (Quagga Thread)
+        ''' Event handling for dynamic policy compilation '''  
+        event=Event()
         
-        print "Done with init"
+        ''' Dynamic update policy thread '''
+        dynamic_update_policy_thread=Thread(target=dynamic_update_policy_event_hadler,args=(event,self.update_policy))
+        dynamic_update_policy_thread.daemon = True
+        dynamic_update_policy_thread.start()   
         
-    def compose_policies(self,init):
-        # Update the sdx and participant data structures
-        # Get the VNH assignment
-        print "Compose policy function called with init: ",init
-        if init==True:
-            print "INIT: Parsing Policies"
-            sdx_parse_policies(cwd + '/pyretic/sdx/sdx_policies.cfg', self.sdx, self.participants)
-            self.policy=sdx_platform(self.sdx)
-            # Get the time to compile initial set of policies
-            start_comp=time.time()
-            #self.policy.compile()
-            #print "INIT: dict: ",self.__dict__
-            print  'INIT: Aggregate Compilation',time.time() - start_comp, "seconds"
-                   
-        else:
-            self.policy=drop
-            sdx_update_policies(cwd + '/pyretic/sdx/sdx_policies.cfg',self.sdx, self.participants)
-            self.policy=sdx_platform(self.sdx)
-            #print "UPDATE: policy returned: ",self.policy 
-
-        print "Done with compose"
-        return self.policy
+        ''' Router Server interface thread '''
+        route_server_thread=Thread(target=qI.main,args=(event,self.base))
+        route_server_thread.daemon=True
+        route_server_thread.start()
         
-    def update_policy(self,init):
-        self.policy=self.compose_policies (init)
+    def update_policy(self):
+        
+        # TODO: why are we running sdx_parse_polcieis for every update_policy (this is a serious bottleneck in policy compilation time) - MS
+        sdx_parse_policies(cwd+'/pyretic/sdx/sdx_policies.cfg',self.base,self.participants)
+        
+        ''' Get updated policy '''
+        self.policy=sdx_platform(self.base)
+        
+        # Maybe we won't have to update it that often - MS
+        ''' Get updated IP to MAC list '''
+        self.ip_mac_list=get_ip_mac_list(self.base.VNH_2_IP,self.base.VNH_2_mac)
     
-    def transition_signal_catcher(self,queue):
-        print "Transition signal catcher called"
-        while 1:
-            try:  
-                line = queue.get(timeout=.1)
-            except:
-                continue
-            else: # Got line 
-                self.update_policy(False)
+'''' Dynamic update policy handler '''
+def dynamic_update_policy_event_hadler(event,update_policy):
+    
+    while True:
+        ''' Wait for the update event '''
+        event.wait()
+        
+        ''' Compile updates '''
+        update_policy()
+        
+        ''' Clear the event '''
+        event.clear()
 
 ### Main ###
 def main():
     
-    p=SDX_Policies()
+    policy=sdx_policy()
     
-    # TODO: ip_mac_list structure needs to be dynamically updated.
-    ip_mac_list=get_ip_mac_list(p.sdx.VNH_2_IP,p.sdx.VNH_2_mac)
-    
-    return if_(ARP,arp(ip_mac_list),if_(BGP,identity, p))>>mac_learner()
+    return if_(ARP,
+                   arp(policy.ip_mac_list),
+                   if_(BGP,
+                           identity,
+                           policy
+                   )
+               ) >> mac_learner()
