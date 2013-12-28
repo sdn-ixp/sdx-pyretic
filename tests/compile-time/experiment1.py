@@ -114,7 +114,7 @@ def generate_policies(sdx,participants,ntot,nin):
 
      
 def main():
-    ntot=3
+    ntot=100
     nin=3   # number of participants with inbound policies
     sdx_participants=generate_sdxglobal(ntot,nin)
     (sdx,participants) = sdx_parse_config('sdx_global.cfg')
@@ -124,7 +124,7 @@ def main():
     print "Completed State Machine COmposition"
     print aggr_policies
     start_comp=time.time()
-    print aggr_policies.compile()
+    #print aggr_policies.compile()
     print  'Completed Aggregate Compilation',time.time() - start_comp, "seconds"
     
 
