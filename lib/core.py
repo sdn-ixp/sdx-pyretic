@@ -274,7 +274,7 @@ def sdx_parse_config(config_file):
         sdx_ports[participant_name] = [PhysicalPort(id_ = participant["Ports"][i]['Id'], mac = MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
         print sdx_ports[participant_name]
         ''' Adding virtual port '''
-        sdx_vports[participant_name] = VirtualPort() #Check if we need to add a MAC here
+        sdx_vports[participant_name] = VirtualPort(participant= participant_name) #Check if we need to add a MAC here
     
     sdx.sdx_ports=sdx_ports   
     for participant_name in sdx_config:
@@ -309,8 +309,9 @@ def sdx_parse_policies(policy_file, sdx, participants):
              for i in range(0, len(sdx_policies[participant_name]))])  
         print "Before pre",participant.policies
         # translate these policies for VNH Assignment
-        participant.policies=pre_VNH(participant.policies,sdx,participant_name)
         participant.original_policies=participant.policies
+        participant.policies=pre_VNH(participant.policies,sdx,participant_name,participant)
+        
         print "After pre: ",participant.policies
     #print sdx.out_var_to_port[u'outB_1'].id_  
        
@@ -324,9 +325,9 @@ def sdx_parse_policies(policy_file, sdx, participants):
         participants[participant_name].policies=post_VNH(participants[participant_name].policies,
                                                          sdx,participant_name)        
         print "After Post VNH: ",participants[participant_name].policies
-        #start_comp=time.time()
-        #classifier.append(participants[participant_name].policies.compile())
-        #print participant_name, time.time() - start_comp, "seconds"
+        start_comp=time.time()
+        classifier.append(participants[participant_name].policies.compile())
+        print participant_name, time.time() - start_comp, "seconds"
 
 
 def sdx_update_policies(policy_file,sdx, participants):   
@@ -345,7 +346,7 @@ def sdx_update_policies(policy_file,sdx, participants):
              for i in range(0, len(sdx_policies[participant_name]))])  
         print "Before pre",participant.policies
         # translate these policies for VNH Assignment
-        participant.policies=pre_VNH(participant.policies,sdx,participant_name)        
+        participant.policies=pre_VNH(participant.policies,sdx,participant_name,participant)        
         participant.original_policies=participant.policies
     
     update_vnh_assignment(sdx,participants)
