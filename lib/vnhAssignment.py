@@ -391,11 +391,10 @@ def vnh_assignment(sdx, participants):
     VNH_2_pfx = {}
     count = 1
     for pset in lcs:
-        #print pset
         vname = 'VNH' + str(count)
         if vname not in VNH_2_IP:
             nhex = hex(count)
-            VNH_2_IP[vname]=str(list(IPNetwork(VNH_2_IP['VNH']))[count])
+            VNH_2_IP[vname]=str(VNH_2_IP['VNH'][count])
             VNH_2_mac[vname] = MAC(str(EUI(int(EUI(VNH_2_mac['VNH']))+count)))
         VNH_2_pfx[vname] = pset
         for participant in part_2_prefix_updated:
@@ -409,69 +408,22 @@ def vnh_assignment(sdx, participants):
     print part_2_VNH
     print VNH_2_pfx
     print VNH_2_IP
-    print VNH_2_mac
-    """
-    #part_2_VNH = {}   
-
-    
-    # deal with folks without best path policies
-    for participant in part_2_prefix_updated:
-        part_2_VNH[participant] = {}
-        count = 1
-        for prefix_set in part_2_prefix_updated[participant]:
-            if participant not in best_paths:
-                vname = 'VNH' + participant + str(count)
-                base = 'VNH' + participant
-                if vname not in VNH_2_IP:
-                    # Need to update the VNH_2_IP
-                    if base in VNH_2_IP:
-                        last = int(VNH_2_IP[base].split('.')[3])
-                        nlast = last + count * 1 
-                        nhex = hex(nlast - last)
-                        new_mac = VNH_2_mac[base].split('00')[0] + '0' + str(nhex).split('0x')[1]   
-                        # print new_mac   
-                        new_ip = VNH_2_IP[base].split(str(last))[0] + str(nlast)        
-                        VNH_2_IP[vname] = new_ip
-                        VNH_2_mac[vname] = new_mac
-                part_2_VNH[participant][vname] = prefix_set
-                count += 1
-    print part_2_VNH
-    
-    
-    
-    # TODO: Case where same participant has both inbound policies
-    # Now deal with folks with best path policies
-    for participant in part_2_prefix_updated:        
-        for prefix_set in part_2_prefix_updated[participant]:
-            if participant in best_paths:
-                for peer in best_paths[participant]:
-                    if len(list(set(best_paths[participant][peer]).intersection(set(prefix_set)))) > 0:
-                        vname = get_vname(prefix_set, part_2_VNH[peer])
-                        part_2_VNH[participant][vname] = prefix_set   
-    sdx.part_2_VNH = part_2_VNH
-    fwd_map = get_fwdMap(part_2_VNH)
-    
-    print part_2_VNH
-    print VNH_2_IP
-    print VNH_2_mac
-    
-    """
-    
+    print VNH_2_mac    
     
     #----------------------------------------------------------------------------------------------------#
     
     # Step 5
     # Step 5a: Get expanded policies
     for participant in participants_policies:
-        # print "PARTICIPANT: ",participant
+        print "PARTICIPANT: ",participant
         X_policy = participants_policies[participant]
-        # print "Original policy:", X_policy
+        print "Original policy:", X_policy
         
         X_a = step5a(X_policy, participant, prefixes_announced, participant_list)
-        # print "Policy after 5a:\n\n", X_a
+        print "Policy after 5a:\n\n", X_a
         
         X_b = step5b(X_a, participant, part_2_VNH, VNH_2_mac, best_paths, participant_list)
-        # print "Policy after Step 5b:", X_b
+        print "Policy after Step 5b:", X_b
         """
         X_c = step5c(X_b, participant, participant_list, port_2_participant, fwd_map, VNH_2_mac)
         # print "Policy after Step 5c:\n", (X_b >> X_c)
@@ -616,6 +568,7 @@ def pre_VNH(policy, sdx, participant_name):
 def post_VNH(policy, sdx, participant_name):
     # get port_2_state for this participant
     port_2_state = {}
+    port_2_mac={}
     for peer in sdx.participant_2_port[participant_name]:
         if peer != participant_name:
             port_2_state[sdx.participant_2_port[participant_name][peer][0]] = 'in' + peer
@@ -623,11 +576,15 @@ def post_VNH(policy, sdx, participant_name):
             i = 0
             for port in sdx.participant_2_port[participant_name][peer]:
                 port_2_state[port] = 'out' + peer + '_' + str(i)
+                port_2_mac[port]=sdx.sdx_ports[participant_name][i].mac
                 i += 1
+                
     # print port_2_state
     # Create the rules to change the state
     pol = drop
     for port in port_2_state:
-        pol = pol + (match(outport=port) >> modify(state=port_2_state[port]))
-    # print pol
+        if 'out' in port_2_state[port]:
+            pol = pol + (match(outport=port) >> modify(state=port_2_state[port],dstmac=port_2_mac[port]))
+        else:
+            pol = pol + (match(outport=port) >> modify(state=port_2_state[port]))
     return policy >> pol
