@@ -9,8 +9,8 @@
 #        Software Defined Exchange (SDX)
 #
 #  Author:
-#        Arpit Gupta (glex.qsd@gmail.com)
 #        Muhammad Shahbaz
+#        Arpit Gupta (glex.qsd@gmail.com)
 #        Laurent Vanbever
 #
 #  Copyright notice:
@@ -34,27 +34,27 @@
 #        http://www.gnu.org/licenses/.
 #
 
+## General imports
+import os
+from threading import Thread
+from multiprocessing import Process,Queue
+
 ## Pyretic-specific imports
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
-
-from pyretic.modules.arp import *
 from pyretic.modules.mac_learner import *
 
 ## SDX-specific imports
+from pyretic.sdx.utils import *
+from pyretic.sdx.utils.arp import *
 from pyretic.sdx.lib.core import *
 import pyretic.sdx.QuaggaInterface.quagga_interface as qI
 
-## General imports
-import os
-import thread,threading
-from multiprocessing import Process, Queue
 
 cwd = os.getcwd()
 
 BGP_PORT = 179
 BGP = match(srcport=BGP_PORT) | match(dstport=BGP_PORT)
-
 
 class SDX_Policies(DynamicPolicy):
     """Standard MAC-learning logic"""
@@ -69,12 +69,12 @@ class SDX_Policies(DynamicPolicy):
         
         queue=Queue()  
         # Starting the thread to catch transition signals
-        t1 = threading.Thread(target=self.transition_signal_catcher, args=(queue,))
+        t1 = Thread(target=self.transition_signal_catcher, args=(queue,))
         t1.daemon = True
         t1.start()   
         
         # Starting the Quagga Interface thread
-        t2 = threading.Thread(target=qI.main, args=(self.sdx,queue,))
+        t2 = Thread(target=qI.main, args=(self.sdx,queue,))
         t2.daemon = True
         t2.start()
         
@@ -118,19 +118,13 @@ class SDX_Policies(DynamicPolicy):
                 continue
             else: # Got line 
                 self.update_policy(False)
-       
-def getMacList(VNH_2_IP,VNH_2_MAC):
-    ip_mac_list={}
-    for vnh in VNH_2_IP:
-        if vnh != 'VNH':
-            print VNH_2_IP[vnh],VNH_2_mac[vnh]            
-            ip_mac_list[IPAddr(VNH_2_IP[vnh])]=EthAddr(VNH_2_mac[vnh])
-    return ip_mac_list
 
 ### Main ###
 def main():
     
     p=SDX_Policies()
-    ip_mac_list=getMacList(p.sdx.VNH_2_IP,p.sdx.VNH_2_mac)
-    print "ip_mac_list: ",ip_mac_list
-    return if_(ARP, arp(ip_mac_list), if_(BGP, identity, p)) >> mac_learner()
+    
+    # TODO: ip_mac_list structure needs to be dynamically updated.
+    ip_mac_list=get_ip_mac_list(p.sdx.VNH_2_IP,p.sdx.VNH_2_mac)
+    
+    return if_(ARP,arp(ip_mac_list),if_(BGP,identity, p))>>mac_learner()
