@@ -8,14 +8,13 @@ from bgp_server import bgp_server
 
 class route_server():
     
-    def __init__(self):
+    def __init__(self, peers_list):
         
         self.peers = {}
         
-        self.peers['172.0.0.1']  = peer('172.0.0.1')
-        self.peers['172.0.0.11'] = peer('172.0.0.11')
-        self.peers['172.0.0.21'] = peer('172.0.0.21')
-        self.peers['172.0.0.22'] = peer('172.0.0.22')
+        for peer_item in peers_list:
+            if (peer_item not in self.peers.keys()):
+                self.peers[peer_item]  = peer(peer_item)
         
         self.server = None
         
@@ -35,6 +34,8 @@ class route_server():
 ''' main '''    
 if __name__ == '__main__':
     
-    my_rs = route_server()
+    peers_list = ['172.0.0.1', '172.0.0.11', '172.0.0.21', '172.0.0.22']
+    
+    my_rs = route_server(peers_list)
     my_rs.start()
     
