@@ -3,32 +3,40 @@
 #  Author:
 #  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
 
-from peer import peer
-from bgp_server import bgp_server
+import json
+from peer import peer as Peer
+from server import server as Server
+from pyretic.sdx.lib.core import sdx_update_route
 
 class route_server():
     
     def __init__(self, peers_list):
         
         self.peers = {}
-        
-        for peer_item in peers_list:
-            if (peer_item not in self.peers.keys()):
-                self.peers[peer_item]  = peer(peer_item)
+        self.peers_list = peers_list
         
         self.server = None
         
-    def start(self):
-        self.server = bgp_server()
+    def start(self,event_queue,sdx):
+        
+        # TODO: resolve sql-lite multi-threading issue - MS
+        for peer_item in self.peers_list:
+            if (peer_item not in self.peers.keys()):
+                self.peers[peer_item] = Peer(peer_item)
+                
+        self.server = Server()
     
         while True:
             try:
                 route = self.server.receiver_queue.get()
+                route = json.loads(route)
+                
+                updated_route = sdx_update_route(sdx,route,event_queue)
                 
                 for peer in self.peers:
-                    self.peers[peer].update(route,self.server.sender_queue)
+                    self.peers[peer].update(updated_route,self.server.sender_queue)
             except:
-                print 'route_serer_error: thread ended'
+                print 'route_sever_error: thread ended'
                 break
     
 ''' main '''    
@@ -37,5 +45,5 @@ if __name__ == '__main__':
     peers_list = ['172.0.0.1', '172.0.0.11', '172.0.0.21', '172.0.0.22']
     
     my_rs = route_server(peers_list)
-    my_rs.start()
+    my_rs.start(None,None)
     

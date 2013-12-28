@@ -49,8 +49,7 @@ from pyretic.sdx.utils import *
 from pyretic.sdx.utils.arp import *
 from pyretic.sdx.utils.inet import *
 from pyretic.sdx.lib.core import *
-
-import pyretic.sdx.QuaggaInterface.quagga_interface as qI
+from pyretic.sdx.bgp.route_server import route_server
 
 ''' Get current working directory ''' 
 cwd = os.getcwd()
@@ -64,24 +63,33 @@ class sdx_policy(DynamicPolicy):
         
         print "SDX:",self.__dict__
         
-        (self.base,self.participants)=sdx_parse_config(cwd+'/pyretic/sdx/sdx_global.cfg')
+        (self.base,self.participants) = sdx_parse_config(cwd+'/pyretic/sdx/sdx_global.cfg')
         
         ''' Get updated policy'''
         self.update_policy()
         
         ''' Event handling for dynamic policy compilation '''  
-        event=Event()
+        event_queue=Queue()
         
         ''' Dynamic update policy thread '''
-        dynamic_update_policy_thread=Thread(target=dynamic_update_policy_event_hadler,args=(event,self.update_policy))
+        dynamic_update_policy_thread = Thread(target=dynamic_update_policy_event_hadler,args=(event_queue,self.update_policy))
         dynamic_update_policy_thread.daemon = True
         dynamic_update_policy_thread.start()   
         
         ''' Router Server interface thread '''
-        # TODO: replace this with route server handler (still in progress) - MS
-        route_server_thread=Thread(target=qI.main,args=(event,self.base))
-        route_server_thread.daemon=True
-        route_server_thread.start()
+        #TODO: need to clean up this logic by updating the core.py - MS
+        
+        peers_list=[]
+        
+        for participant_name in self.participants:
+            for port in self.participants[participant_name].phys_ports:
+                peers_list.append(str(port.ip))
+                
+        rs = route_server(peers_list)
+        
+        rs_thread = Thread(target=rs.start,args=(event_queue,self.base))
+        rs_thread.daemon = True
+        rs_thread.start()
         
     def update_policy(self):
         
@@ -89,29 +97,25 @@ class sdx_policy(DynamicPolicy):
         sdx_parse_policies(cwd+'/pyretic/sdx/sdx_policies.cfg',self.base,self.participants)
         
         ''' Get updated policy '''
-        self.policy=sdx_platform(self.base)
+        self.policy = sdx_platform(self.base)
         
-        # Maybe we won't have to update it that often - MS
         ''' Get updated IP to MAC list '''
-        self.ip_mac_list=get_ip_mac_list(self.base.VNH_2_IP,self.base.VNH_2_mac)
+        # TODO: Maybe we won't have to update it that often - MS
+        self.ip_mac_list = get_ip_mac_list(self.base.VNH_2_IP,self.base.VNH_2_mac)
     
 '''' Dynamic update policy handler '''
-def dynamic_update_policy_event_hadler(event,update_policy):
+def dynamic_update_policy_event_hadler(event_queue,update_policy):
     
     while True:
-        ''' Wait for the update event '''
-        event.wait()
+        event_queue.get()
         
         ''' Compile updates '''
         update_policy()
         
-        ''' Clear the event '''
-        event.clear()
-
-### Main ###
+''' Main '''
 def main():
     
-    policy=sdx_policy()
+    policy = sdx_policy()
     
     return if_(ARP,
                    arp(policy.ip_mac_list),

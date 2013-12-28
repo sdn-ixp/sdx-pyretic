@@ -137,6 +137,7 @@ class SDX(object):
                     pname=participant_name
                     break
         return pname
+    
     def get_neighborList(self,sname):
         #print type(sname)
         neighbor_list=[]
@@ -351,5 +352,35 @@ def sdx_update_policies(policy_file,sdx, participants):
     update_vnh_assignment(sdx,participants)
     for participant_name in participants:
         participants[participant_name].policies=post_VNH(participants[participant_name].policies,
-                                                         sdx,participant_name)         
+                                                         sdx,participant_name)      
+        
+        
+''' Update route with new next-hop after VNH processing '''
+def sdx_update_route(sdx,route,event_queue):
+    
+    prefix_nh_list = {}
+    
+    try:
+        if ('announce' in route['neighbor']['update']):
+            announce = route['neighbor']['update']['announce']
+            if ('ipv4 unicast' in announce):
+                prefix_nh_list = announce['ipv4 unicast']      
+        # How are we handling the withdraw updates - MS
+        elif ('withdraw' in route['neighbor']['update']):
+            withdraw = route['neighbor']['update']['withdraw']
+            if ('ipv4 unicast' in withdraw):
+                prefix_nh_list = withdraw['ipv4 unicast']
+    except:
+        print 'BGP update is not an announcement or withdrawal message'
+        
+    # TODO: populate SDX data structures - MS
+    
+    for prefix in prefix_nh_list:
+        # TODO: do VNH assignment and update the next hop IP address - MS
+        prefix_nh_list[prefix]['next-hop'] = '10.10.10.10' 
+    
+    event_queue.put("")
+        
+    return route
+    
     
