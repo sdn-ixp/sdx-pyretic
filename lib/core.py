@@ -345,8 +345,7 @@ def sdx_update_policies(policy_file,sdx, participants):
              for i in range(0, len(sdx_policies[participant_name]))])  
         print "Before pre",participant.policies
         # translate these policies for VNH Assignment
-        participant.policies=pre_VNH(participant.policies,sdx,participant_name)
-        
+        participant.policies=pre_VNH(participant.policies,sdx,participant_name)        
         participant.original_policies=participant.policies
     
     update_vnh_assignment(sdx,participants)

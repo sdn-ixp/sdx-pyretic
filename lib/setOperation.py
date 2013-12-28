@@ -192,6 +192,7 @@ def lcs_parallel(part_2_prefix):
     
    
 def lcs_recompute(p2p_old, p2p_new,part_2_prefix_updated,lcs_old=[]):
+    # TODO: Update this implementation with latest updates
     p2p_updated={}
     if len(lcs_old)==0:
         lcs_old=getLCS(part_2_prefix_updated)
@@ -210,18 +211,19 @@ def lcs_recompute(p2p_old, p2p_new,part_2_prefix_updated,lcs_old=[]):
             p2p_updated[participant]=plist        
         print participant,pset_new
     print p2p_updated
-    prefix_decompose(p2p_updated)
+    decompose_simpler(p2p_updated)
+    lcs=p2p_updated['old']
     for participant in part_2_prefix_updated:
         tmp={}
         if participant in affected_participants:
             tmp['new']=p2p_updated['old']
             tmp[participant]=part_2_prefix_updated[participant]
-            prefix_decompose(tmp)
+            decompose_simpler(tmp)
             p2p_updated[participant]=tmp[participant]
         else:
             p2p_updated[participant]=part_2_prefix_updated[participant]
     p2p_updated.pop('old')
-    return p2p_updated
+    return p2p_updated,lcs
 
 
 def decompose_simpler_multi(part_2_prefix,q=None):
