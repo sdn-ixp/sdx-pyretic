@@ -78,6 +78,7 @@ class sdx_policy(DynamicPolicy):
         dynamic_update_policy_thread.start()   
         
         ''' Router Server interface thread '''
+        # TODO: replace this with route server handler (still in progress) - MS
         route_server_thread=Thread(target=qI.main,args=(event,self.base))
         route_server_thread.daemon=True
         route_server_thread.start()
