@@ -85,8 +85,8 @@ def generate_policies(sdx,participants,ntot,nin):
         print participant.id_
         if int(participant.id_)<=nin:
             print "inbound policies"
-            policy=((match(dstport=80) >> sdx.fwd(participant.phys_ports[1]))+
-                    (match(dstport=22) >> sdx.fwd(participant.phys_ports[0]))
+            policy=((match(dstport=80) >> sdx.fwd(participant.phys_ports[2]))+
+                    (match(dstport=22) >> sdx.fwd(participant.phys_ports[1]))
                    )
         else:
             print "outbound policies"
@@ -100,15 +100,32 @@ def generate_policies(sdx,participants,ntot,nin):
         participant.policies=pre_VNH(participant.policies,sdx,participant.id_,participant)
         print participant.policies
     vnh_assignment(sdx,participants)
+    classifier=[]
+    for participant_name in participants:
+        print participant_name
+        participants[participant_name].policies=post_VNH(participants[participant_name].policies,
+                                                         sdx,participant_name)        
+        #print "After Post VNH: ",participants[participant_name].policies
+        start_comp=time.time()
+        classifier=(participants[participant_name].policies.compile())
+        #print classifier
+        print participant_name, time.time() - start_comp, "seconds"
+    
 
      
 def main():
-    ntot=100
+    ntot=3
     nin=3   # number of participants with inbound policies
     sdx_participants=generate_sdxglobal(ntot,nin)
     (sdx,participants) = sdx_parse_config('sdx_global.cfg')
     update_paramters(sdx,ntot,nin)
     generate_policies(sdx,participants,ntot,nin)
+    aggr_policies=sdx_platform(sdx)
+    print "Completed State Machine COmposition"
+    print aggr_policies
+    start_comp=time.time()
+    print aggr_policies.compile()
+    print  'Completed Aggregate Compilation',time.time() - start_comp, "seconds"
     
 
 if __name__ == '__main__':

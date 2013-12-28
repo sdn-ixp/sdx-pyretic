@@ -166,8 +166,8 @@ def get_peerName(port, p_list):
 
 def get_default_forwarding_policy(best_path, participant, participant_list):
     # for peer in best_path:
-    print best_path,participant,participant_list
-    print best_path.keys()
+    #print best_path,participant,participant_list
+    #print best_path.keys()
     policy_ip = parallel([match_prefixes_set(set(best_path[peer])) >> fwd(participant_list[participant][unicode(str(peer))][0]) 
                         for peer in best_path.keys()]) 
     # print policy_ip
@@ -424,7 +424,7 @@ def vnh_assignment(sdx, participants):
     # Step 5
     # Step 5a: Get expanded policies
     for participant in participants_policies:
-        print "PARTICIPANT: ",participant
+        #print "PARTICIPANT: ",participant
         X_policy = participants_policies[participant]
         #print "Original policy:", X_policy
         
@@ -436,7 +436,7 @@ def vnh_assignment(sdx, participants):
 
         participants_policies[participant] = X_b
         participants[participant].policies = participants_policies[participant]
-        print "Policy after Step 5:", participants_policies[participant]
+        #print "Policy after Step 5:", participants_policies[participant]
         # classifier=participants_policies[participant].compile()
         # print "Compilation result",classifier
 
@@ -547,9 +547,13 @@ def post_VNH(policy, sdx, participant_name):
     # get port_2_state for this participant
     port_2_state = {}
     port_2_mac={}
-    for peer in sdx.participant_2_port[participant_name]:
+    fwdport=extract_all_forward_actions_from_policy(policy)
+    print participant_name,": ",fwdport
+    for port in fwdport:
+        peer=sdx.port_2_participant[int(port)]
+        peer=str(peer)
         if peer != participant_name:
-            port_2_state[sdx.participant_2_port[participant_name][peer][0]] = 'in' + peer
+            port_2_state[port] = 'in' + peer
         else:
             i = 0
             for port in sdx.participant_2_port[participant_name][peer]:
@@ -565,5 +569,4 @@ def post_VNH(policy, sdx, participant_name):
             pol = pol + (match(outport=port) >> modify(state=port_2_state[port],dstmac=port_2_mac[port]))
         else:
             pol = pol + (match(outport=port) >> modify(state=port_2_state[port]))
-
     return policy >> pol
