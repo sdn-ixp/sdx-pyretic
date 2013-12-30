@@ -377,7 +377,8 @@ def sdx_update_route(sdx,route,event_queue):
     
     for prefix in prefix_nh_list:
         # TODO: do VNH assignment and update the next hop IP address - MS
-        prefix_nh_list[prefix]['next-hop'] = '10.10.10.10' 
+        #prefix_nh_list[prefix]['next-hop'] = '10.10.10.10' 
+        prefix_nh_list[prefix]['next-hop'] = prefix_nh_list[prefix]['next-hop']
     
     event_queue.put("")
         
