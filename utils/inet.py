@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+#  Author:
+#  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
+
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
