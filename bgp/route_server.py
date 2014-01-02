@@ -6,44 +6,66 @@
 import json
 from peer import peer as Peer
 from server import server as Server
-from pyretic.sdx.lib.core import sdx_update_route
+
+from pyretic.sdx.utils import get_participants_ports_list
+from pyretic.sdx.lib.bgp_interface import *
+from pyretic.sdx.bgp.peer import *
 
 class route_server():
     
-    def __init__(self, peers_list):
+    def __init__(self,event_queue,ready_queue,sdx):
         
-        self.peers = {}
-        self.peers_list = peers_list
+        self.event_queue = event_queue
+        self.ready_queue = ready_queue
+        self.sdx = sdx
         
+        participants_ports_list = get_participants_ports_list(sdx.participants)
+        
+        ''' Create and assign participant RIBs '''
+        for participant_name in sdx.participants:
+            self.sdx.participants[participant_name].rs_client = Peer(participants_ports_list[participant_name])
+            
         self.server = None
         
-    def start(self,event_queue,sdx):
+    def start(self):
         
-        # TODO: resolve sql-lite multi-threading issue - MS
-        for peer_item in self.peers_list:
-            if (peer_item not in self.peers.keys()):
-                self.peers[peer_item] = Peer(peer_item)
-                
         self.server = Server()
     
         while True:
-            try:
-                route = self.server.receiver_queue.get()
-                route = json.loads(route)
+            route = self.server.receiver_queue.get()
+            route = json.loads(route)
                 
-                updated_route = sdx_update_route(sdx,route,event_queue)
+            # TODO: check the RIB update flow with others ...
+            # At the moment, I am updating the RIB and will attach next-hop to the announcement at the end
                 
-                for peer in self.peers:
-                    self.peers[peer].update(updated_route,self.server.sender_queue)
-            except:
-                print 'route_sever_error: thread ended'
-                break
-    
+            updates = []
+                
+            for participant_name in self.sdx.participants:
+                updates.append(self.sdx.participants[participant_name].rs_client.update(route))
+           
+            bgp_trigger_update(self.event_queue,self.ready_queue)
+           
+            # TODO: Need to perform some testing to verify performance affect due to updates
+            
+            for update in updates:
+                if (update is None):
+                    continue
+                if ('announce' in update):
+                    for VNH in self.sdx.VNH_2_pfx:
+                        if(update['announce']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
+                            self.server.sender_queue.put(announce_route(update['announce'],self.sdx.VNH_2_IP[VNH]))
+                            break
+                elif ('withdraw' in update):
+                    for VNH in self.sdx.VNH_2_pfx:
+                        if(update['withdraw']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
+                            self.server.sender_queue.put(withdraw_route(update['withdraw'],self.sdx.VNH_2_IP[VNH]))
+                            break
+            
 ''' main '''    
 if __name__ == '__main__':
     
-    peers_list = ['172.0.0.1', '172.0.0.11', '172.0.0.21', '172.0.0.22']
+    participants_list = {'A': ['172.0.0.1', '172.0.0.11'], 'B': ['172.0.0.21', '172.0.0.22']}
     
-    my_rs = route_server(peers_list)
+    my_rs = route_server(participants_list)
     my_rs.start(None,None)
     
