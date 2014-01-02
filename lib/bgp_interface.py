@@ -46,7 +46,7 @@ def bgp_trigger_update(event_queue,ready_queue):
     
     ''' Wait for the policies to get updated ''' 
 
-    if (ready_queue.get() == 'bgp'):
-        return
+    while (ready_queue.get() != 'bgp'):
+        pass
 
     
