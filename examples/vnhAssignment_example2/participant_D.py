@@ -40,6 +40,7 @@ from pyretic.lib.std import *
 
 ## SDX-specific imports
 from pyretic.sdx.lib.common import *
+from pyretic.sdx.lib.bgp_interface import *
 from pyretic.sdx.lib.language import *
 
 ## General imports
@@ -67,9 +68,9 @@ def policy(participant, sdx):
         Specify participant policy
     '''
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
-    prefixes_announced=sdx.prefixes_announced
+    prefixes_announced=bgp_get_announced_routes(sdx,'D')
     
     final_policy= (
-                   (match_prefixes_set(set(prefixes_announced['pg1']['D'])) >> sdx.fwd(participant.phys_ports[0]))
+                   (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
                 )
     return final_policy
