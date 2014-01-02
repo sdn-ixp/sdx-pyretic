@@ -10,8 +10,8 @@
 #
 #  Author:
 #        Laurent Vanbever
-#        Arpit Gupta
 #        Muhammad Shahbaz
+#        Arpit Gupta
 #
 #  Copyright notice:
 #        Copyright (C) 2012, 2013 Georgia Institute of Technology
@@ -34,130 +34,136 @@
 #        http://www.gnu.org/licenses/.
 #
 
+## General imports
+import json
+from importlib import import_module
+from ipaddr import IPv4Network
+from netaddr import *
+
 ## Pyretic-specific imports
 from pyretic.lib.corelib import *
 from pyretic.lib.std import *
 
 ## SDX-specific imports
 from pyretic.sdx.lib.common import *
-from pyretic.sdx.lib.setOperation import *
+from pyretic.sdx.lib.bgp_interface import *
+from pyretic.sdx.lib.set_operations import *
 from pyretic.sdx.lib.language import *
 #from pyretic.sdx.lib.policy_converter import *
-from pyretic.sdx.lib.vnhAssignment import *
-## General imports
-import json
-from importlib import import_module
-from ipaddr import IPv4Network
-from netaddr import *
+from pyretic.sdx.lib.vnh_assignment import *
+
 ###
 ### SDX classes
 ###
-# Need to automate generation of these data structures in future
-
-prefix_2_participant={'100.0.0.0/16':{'A':['B'],'B':['C']},
-                      '120.0.0.0/16':{'B':['A','C']},
-                      '140.0.0.0/16':{'C':['B'],'B':['A']},
-                      '150.0.0.0/16':{'C':['B'],'B':['A']},
-                      }
+# TODO: These should be automatically generated using the sdx_config.cfg file
 
 participant_2_port={'A':{'A':[1],'B':[2],'C':[3],'D':[4]},
-                      'B':{'A':[1],'B':[2,21,22],'C':[3],'D':[4]},
-                      'C':{'A':[1],'B':[2],'C':[3],'D':[4]},
-                      'D':{'A':[1],'B':[2],'C':[3],'D':[4]}
-                      }
-prefixes_announced={'pg1':{
-                               'A':['p0'],
-                               'B':['p1','p2','p3','p4','p6'],
-                               'C':['p3','p4','p5','p6'],
-                               'D':['p1','p2','p3','p4','p5','p6'],
-                               }
-                        }
-# Set of prefixes for A's best paths
-# We will get this data structure from RIB
-participant_to_ebgp_nh_received = {
-        'A' : {'p1':'D','p2':'D','p3':'D','p4':'C','p5':'C','p6':'C'}
-    }
+                    'B':{'A':[1],'B':[2,21,22],'C':[3],'D':[4]},
+                    'C':{'A':[1],'B':[2],'C':[3],'D':[4]},
+                    'D':{'A':[1],'B':[2],'C':[3],'D':[4]}
+                   }
 
-peer_groups={'pg1':[1,2,3,4]}
-VNH_2_IP={'VNH':list(IPNetwork('172.0.0.1/28'))}
-VNH_2_mac={'VNH':'AA:00:00:00:00:00'}
-#VNH_2_IP={'VNHB':'172.0.0.126','VNHC':'172.0.0.151','VNHA':'172.0.0.101','VNHD':'172.0.0.176'}
-#VNH_2_mac={'VNHA':'A1:A1:A1:A1:A1:00','VNHC':'C1:C1:C1:C1:C1:00','VNHB':'B1:B1:B1:B1:B1:00',
-#               'VNHD':'D1:D1:D1:D1:D1:00'}
-    
-prefixes={'p1':IPv4Network('11.0.0.0/24'),
-          'p2':IPv4Network('12.0.0.0/24'),
-          'p3':IPv4Network('13.0.0.0/24'),
-          'p4':IPv4Network('14.0.0.0/24'),
-          'p5':IPv4Network('15.0.0.0/24'),
-          'p6':IPv4Network('16.0.0.0/24')
-              }
 port_2_participant = {
-        1 : 'A',
-        2 : 'B',
+        1  : 'A',
+        2  : 'B',
         21 : 'B',
         22 : 'B',
-        3 : 'C',
-        4 : 'D'
+        3  : 'C',
+        4  : 'D'
     }
+
+# TODO: these should be added in the config file too and auto-generated
+VNH_2_IP = {
+            'VNH':list(IPNetwork('172.0.0.1/28'))
+          }
+VNH_2_MAC={
+            'VNH':'AA:00:00:00:00:00'
+          }
+
+#peer_groups={'pg1':[1,2,3,4]}
+
+#prefixes_announced={'pg1':{
+#                               'A':['10.0.0.0/24'],
+#                               'B':['11.0.0.0/24','12.0.0.0/24','13.0.0.0/24','14.0.0.0/24','16.0.0.0/24'],
+#                               'C':['13.0.0.0/24','14.0.0.0/24','15.0.0.0/24','16.0.0.0/24'],
+#                               'D':['11.0.0.0/24','12.0.0.0/24','13.0.0.0/24','14.0.0.0/24','15.0.0.0/24','16.0.0.0/24'],
+#                               }
+#                        }
+
+# Set of prefixes for A's best paths
+# We will get this data structure from RIB
+#participant_to_ebgp_nh_received = {
+#        'A' : {'11.0.0.0/24':'D','12.0.0.0/24':'D','13.0.0.0/24':'D','14.0.0.0/24':'C','15.0.0.0/24':'C','16.0.0.0/24':'C'}
+#    }
+    
+#prefixes={'p1':IPv4Network('11.0.0.0/24'),
+#          'p2':IPv4Network('12.0.0.0/24'),
+#          'p3':IPv4Network('13.0.0.0/24'),
+#          'p4':IPv4Network('14.0.0.0/24'),
+#          'p5':IPv4Network('15.0.0.0/24'),
+#          'p6':IPv4Network('16.0.0.0/24')
+#              }
+
+
 class SDX(object):
     """Represent a SDX platform configuration"""
     def __init__(self):
-        self.participants = []
+        self.participants = {}
+        
         self.sdx_ports={}
         self.participant_id_to_in_var = {}
         self.out_var_to_port = {}
         self.port_id_to_out_var = {}
-        self.policy_2_prefix={}
-        self.prefix_2_policy={}
+        
+        #self.policy_2_prefix={}
+        #self.prefix_2_policy={}
         #self.prefix_2_participant=prefix_2_participant # This will be later updated from the BGP RIB table
-        self.policy_2_VNH={}
+        #self.policy_2_VNH={}
+        
         self.participant_2_port=participant_2_port
-        self.prefixes_announced=prefixes_announced
-        self.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received
-        self.peer_groups=peer_groups
+        
+        #self.prefixes_announced=prefixes_announced
+        #self.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received
+        #self.peer_groups=peer_groups
+        
+        VNH_2_pfx = None
         self.VNH_2_IP=VNH_2_IP
-        self.VNH_2_mac=VNH_2_mac
+        self.VNH_2_MAC=VNH_2_MAC
         self.part_2_VNH={}
-        self.prefixes=prefixes
+        
+        #self.prefixes=prefixes
+        
         self.port_2_participant=port_2_participant
         self.part_2_prefix_old={}
         self.part_2_prefix_lcs={}
         self.lcs_old=[]
         
-    def get_participantName(self,ip):
-        pname=''
-        #print self.sdx_ports
-        #print ip
+    ''' Get the name of the participant belonging to the IP address '''
+    def get_participant_name(self,ip):
+        
         for participant_name in self.sdx_ports:
-            for port in self.sdx_ports[participant_name]:
-                #print port.ip
-                if IP(ip)==port.ip:
-                    #print "IP matched"
-                    pname=participant_name
-                    break
-        return pname
+            for port in self.sdx_ports[participant_name]:  
+                if ip is str(port.ip):
+                    return participant_name
     
     def get_neighborList(self,sname):
         #print type(sname)
         neighbor_list=[]
         for participant in self.participants:
             #print participant.peers.keys()
-            if sname in participant.peers.keys():
+            if sname in self.participants[participant].peers.keys():
                 #print "Neighbor found",participant.id_
-                neighbor_list.append(participant.id_) 
+                neighbor_list.append(self.participants[participant].id_) 
         return neighbor_list
     
-    def add_participant(self, participant):
-        self.participants.append(participant)
+    def add_participant(self, participant, name):
+        self.participants[name] = participant
         self.participant_id_to_in_var[participant.id_] = "in" + participant.id_.upper()
         i = 0
         for port in participant.phys_ports:
             self.port_id_to_out_var[port.id_] = "out" + participant.id_.upper() + "_" + str(i)
             self.out_var_to_port["out" + participant.id_.upper() + "_" + str(i)] = port
             i += 1
-    
-    #def return_participant(self,ip):
     
     def fwd(self, port):
         if isinstance(port, PhysicalPort):
@@ -204,9 +210,9 @@ def sdx_preprocessing(sdx_config):
     '''
     preprocessing_policies = []
     for participant in sdx_config.participants:
-        for port in participant.phys_ports:
+        for port in sdx_config.participants[participant].phys_ports:
             preprocessing_policies.append((match(inport=port.id_) >> 
-                modify(state=sdx_config.participant_id_to_in_var[participant.id_])))
+                modify(state=sdx_config.participant_id_to_in_var[sdx_config.participants[participant].id_])))
     return parallel(preprocessing_policies)
 
 def sdx_postprocessing(sdx_config):
@@ -232,12 +238,10 @@ def sdx_participant_policies(sdx_config):
         sdx_policy = sequential([
                 sdx_policy,
                 parallel(
-                    [sdx_restrict_state(sdx_config, participant) for participant in sdx_config.participants]
+                    [sdx_restrict_state(sdx_config, sdx_config.participants[participant]) for participant in sdx_config.participants]
                 )])
     return sdx_policy
 
-
-    
 def sdx_platform(sdx_config):
     '''
         Defines the SDX platform workflow
@@ -250,7 +254,6 @@ def sdx_platform(sdx_config):
         sdx_postprocessing(sdx_config)
     )
  
-
 ###
 ### SDX primary functions
 ###
@@ -262,7 +265,6 @@ def sdx_parse_config(config_file):
     #print sdx_config
     sdx_ports = {}
     sdx_vports = {}
-    sdx_participants = {}
     
     ''' 
         Create SDX environment ...
@@ -271,10 +273,10 @@ def sdx_parse_config(config_file):
         
         ''' Adding physical ports '''
         participant = sdx_config[participant_name]
-        sdx_ports[participant_name] = [PhysicalPort(id_ = participant["Ports"][i]['Id'], mac = MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
+        sdx_ports[participant_name] = [PhysicalPort(id_=participant["Ports"][i]['Id'],mac=MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
         print sdx_ports[participant_name]
         ''' Adding virtual port '''
-        sdx_vports[participant_name] = VirtualPort(participant= participant_name) #Check if we need to add a MAC here
+        sdx_vports[participant_name] = VirtualPort(participant=participant_name) #Check if we need to add a MAC here
     
     sdx.sdx_ports=sdx_ports   
     for participant_name in sdx_config:
@@ -285,22 +287,21 @@ def sdx_parse_config(config_file):
             peers[peer_name] = sdx_vports[peer_name]
             
         ''' Creating a participant object '''
-        sdx_participants[participant_name] = SDXParticipant(id_ = participant_name, vport=sdx_vports[participant_name], phys_ports = sdx_ports[participant_name], peers = peers)
+        sdx_participant = SDXParticipant(id_=participant_name,vport=sdx_vports[participant_name],phys_ports=sdx_ports[participant_name],peers=peers)
         
         ''' Adding the participant in the SDX '''
-        sdx.add_participant(sdx_participants[participant_name])
+        sdx.add_participant(sdx_participant,participant_name)
     
-    return (sdx, sdx_participants)
-                    
-    
-def sdx_parse_policies(policy_file, sdx, participants):
+    return sdx
+                
+def sdx_parse_policies(policy_file,sdx):
         
-    sdx_policies = json.load(open(policy_file, 'r'))  
+    sdx_policies = json.load(open(policy_file,'r'))  
     ''' 
         Get participants policies
     '''
     for participant_name in sdx_policies:
-        participant = participants[participant_name]
+        participant = sdx.participants[participant_name]
         policy_modules = [import_module(sdx_policies[participant_name][i]) 
                           for i in range(0, len(sdx_policies[participant_name]))]
         
@@ -316,72 +317,16 @@ def sdx_parse_policies(policy_file, sdx, participants):
     #print sdx.out_var_to_port[u'outB_1'].id_  
        
     # Virtual Next Hop Assignment
-    vnh_assignment(sdx,participants) 
+    vnh_assignment(sdx) 
     print "Completed VNH Assignment"
     # translate these policies post VNH Assignment
     
     classifier=[]
-    for participant_name in participants:
-        participants[participant_name].policies=post_VNH(participants[participant_name].policies,
+    for participant_name in sdx.participants:
+        sdx.participants[participant_name].policies=post_VNH(sdx.participants[participant_name].policies,
                                                          sdx,participant_name)        
-        print "After Post VNH: ",participants[participant_name].policies
+        print "After Post VNH: ",sdx.participants[participant_name].policies
         start_comp=time.time()
-        classifier.append(participants[participant_name].policies.compile())
+        classifier.append(sdx.participants[participant_name].policies.compile())
         print participant_name, time.time() - start_comp, "seconds"
-
-
-def sdx_update_policies(policy_file,sdx, participants):   
-    "Update the VNH Assignment"
-    sdx_policies = json.load(open(policy_file, 'r'))  
-    ''' 
-        Get participants policies
-    '''
-    for participant_name in sdx_policies:
-        participant = participants[participant_name]
-        policy_modules = [import_module(sdx_policies[participant_name][i]) 
-                          for i in range(0, len(sdx_policies[participant_name]))]
-        
-        participant.policies = parallel([
-             policy_modules[i].policy(participant, sdx) 
-             for i in range(0, len(sdx_policies[participant_name]))])  
-        print "Before pre",participant.policies
-        # translate these policies for VNH Assignment
-        participant.policies=pre_VNH(participant.policies,sdx,participant_name,participant)        
-        participant.original_policies=participant.policies
-    
-    update_vnh_assignment(sdx,participants)
-    for participant_name in participants:
-        participants[participant_name].policies=post_VNH(participants[participant_name].policies,
-                                                         sdx,participant_name)      
-        
-        
-''' Update route with new next-hop after VNH processing '''
-def sdx_update_route(sdx,route,event_queue):
-    
-    prefix_nh_list = {}
-    
-    try:
-        if ('announce' in route['neighbor']['update']):
-            announce = route['neighbor']['update']['announce']
-            if ('ipv4 unicast' in announce):
-                prefix_nh_list = announce['ipv4 unicast']      
-        # How are we handling the withdraw updates - MS
-        elif ('withdraw' in route['neighbor']['update']):
-            withdraw = route['neighbor']['update']['withdraw']
-            if ('ipv4 unicast' in withdraw):
-                prefix_nh_list = withdraw['ipv4 unicast']
-    except:
-        print 'BGP update is not an announcement or withdrawal message'
-        
-    # TODO: populate SDX data structures - MS
-    
-    for prefix in prefix_nh_list:
-        # TODO: do VNH assignment and update the next hop IP address - MS
-        #prefix_nh_list[prefix]['next-hop'] = '10.10.10.10' 
-        prefix_nh_list[prefix]['next-hop'] = prefix_nh_list[prefix]['next-hop']
-    
-    event_queue.put("")
-        
-    return route
-    
     
