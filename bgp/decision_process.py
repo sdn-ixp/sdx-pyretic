@@ -33,19 +33,56 @@ def decision_process(rib,prefix):
             min_route_len = aspath_len('as-path' in route)
             best_routes.append(route)
 
-    #If there's only 1, it's the best route    
+    # If there's only 1, it's the best route    
     if len(best_routes) == 1:
         return best_routes.pop()
 
     
     # Compare the MED only among routes that have been advertised by the same AS. 
     # Put it differently, you should skip this step if two routes are advertised by two different ASes. 
-
     
+    # get all the ASes advertising the route
+    as_list = None
+    post_med_best_routes = None
+    for route in best_routes:
+        as_list.append(get_advertised_as('as-path' in route))
 
-        #next
-            #Lowest Router ID - what is this? Random?
+    # sort the advertiser's list and 
+    # look at ones who's count != 1
+    as_list.sort()
+    i = 0
+    while i < len(as_list):
+        if as_list.count(as_list[i]) != 1:
+            # get all that match the particular AS
+            from_as_list = x for x in best_routes if get_advertised_as('as-path' in x) = as_list[i]
 
+            # MED comparison here
+            j = 0
+            lowest_med = 'med' in from_as_list[j]
+            j++
+            while j < len(from_as_list):
+                if lowest_med > 'med' in from_as_list[j]:
+                    lowest_med = 'med' in from_as_list[j]
+                j++
+            
+            # add to post-MED list - this could be more than one if MEDs match
+            post_med_best_routes.append(x for x in from_as_list if
+                                        'med' in x == lowest_med)
+            i = i + as_list.count(as_list[i])
+        else:
+            post_med_best_routes.append(x for x in best_routes if get_advertised_as('as-path' in x) == as_list[i])
+            i++
+    
+    # If there's only 1, it's the best route
+    if len(post_med_best_routes) == 1:
+        return post_med_best_routes.pop()
+
+
+    #Lowest Router ID - Origin IP of the routers left.
+#    i = 0
+#    while i < len(post_med_best_routes):
+
+    # Compare IP addresses
 
     return None
         
@@ -53,6 +90,10 @@ def decision_process(rib,prefix):
 def aspath_length(as_path)
     ases = as_path.split()
     return len(ases)
+
+def get_advertised_as(as_path)
+    ases = as_path.split()
+    return ases[0]
 
 def clear_list(list)
     del list[:]
