@@ -2,7 +2,7 @@
 #  Author:
 #  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
 #  Sean Donovan
-
+import socket,struct
 ''' BGP decision process '''
 def decision_process(rib,prefix):
     # TODO: add the actual best-path selection algorithm.
@@ -79,21 +79,35 @@ def decision_process(rib,prefix):
 
 
     #Lowest Router ID - Origin IP of the routers left.
-#    i = 0
-#    while i < len(post_med_best_routes):
+    i = 0
+    lowest_ip_as_long = ip_to_long('origin' in post_med_best_routes[i])
+    i++
+    while i < len(post_med_best_routes):
+        if lowest_ip_as_long > ip_to_long('origin' in post_med_best_routes[i]):
+            lowest_ip_as_long = ip_to_long('origin' in post_med_best_routes[i])
+        i++
 
-    # Compare IP addresses
+    return post_med_best_routes[get_index(post_med_best_routes, 'origin', long_to_ip(lowest_ip_as_long))]
 
-    return None
         
     
-def aspath_length(as_path)
+def aspath_length(as_path):
     ases = as_path.split()
     return len(ases)
 
-def get_advertised_as(as_path)
+def get_advertised_as(as_path):
     ases = as_path.split()
     return ases[0]
 
-def clear_list(list)
+def clear_list(list):
     del list[:]
+
+def ip_to_long(ip):
+    return struct.unpack('!L', inet_aton(ip))[0]
+
+def long_to_ip(ip):
+    return socket.inet_ntoa(struct.pack('!L', ip))
+      
+
+def get_index(seq, attr, value):
+    return next(index for (index, d) in enumerate(seq) if d[attr] == value)
