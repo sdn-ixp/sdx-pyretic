@@ -321,7 +321,7 @@ def step4(lcs,part_2_VNH,VNH_2_pfx,VNH_2_IP,VNH_2_MAC,part_2_prefix_updated):
         VNH_2_pfx[vname] = pset
         for participant in part_2_prefix_updated:
             #print part_2_prefix_updated
-            if list(pset) in part_2_prefix_updated[participant]:
+            if list(pset) in part_2_prefix_updated[participant] or pset in part_2_prefix_updated[participant]:
                 if participant not in part_2_VNH:
                     part_2_VNH[participant] = {}
                 part_2_VNH[participant][vname] = pset

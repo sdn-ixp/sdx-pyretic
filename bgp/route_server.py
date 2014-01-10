@@ -6,6 +6,7 @@
 import json
 from peer import peer as Peer
 from server import server as Server
+from decision_process_simple import decision_process_simple as decision_process
 
 from pyretic.sdx.utils import get_participants_ports_list
 from pyretic.sdx.lib.bgp_interface import *

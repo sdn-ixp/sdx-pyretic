@@ -18,7 +18,8 @@ def bgp_get_best_routes(sdx,participant_name):
             routes = sdx.participants[participant_name].rs_client.filter_route('local','next_hop',str(port.ip))
             
             if routes:
-                best_routes[peer_name] = []
+                if (peer_name not in best_routes):
+                    best_routes[peer_name] = []
             
                 for route in routes:
                     best_routes[peer_name].append(route['prefix'])

@@ -71,16 +71,16 @@ def policy(participant, sdx):
     prefixes_announced=bgp_get_announced_routes(sdx,'C')
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
     
-    #final_policy=(
-    #              (match(dstport=80) >> sdx.fwd(participant.phys_ports[0])) +
-    #              (match(dstport=22) >> sdx.fwd(participant.phys_ports[0])) +
-    #              (match_prefixes_set(set(['120.0.0.0/24'])) >> sdx.fwd(participant.phys_ports[0])) +
-    #              (match_prefixes_set(set(['130.0.0.0/24'])) >> sdx.fwd(participant.phys_ports[0]))+
-    #              (match_prefixes_set(set(prefixes_announced).difference(set(['140.0.0.0/24','150.0.0.0/24']))) >> sdx.fwd(participant.phys_ports[1]))
-    #            )
-    
-    final_policy= (
-                   (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
+    final_policy=(
+                  (match(dstport=80) >> sdx.fwd(participant.phys_ports[0])) +
+                  (match(dstport=22) >> sdx.fwd(participant.phys_ports[0])) +
+                  (match_prefixes_set(set(['140.0.0.0/24'])) >> sdx.fwd(participant.phys_ports[0])) +
+                  (match_prefixes_set(set(prefixes_announced).difference(set(['140.0.0.0/24']))) >> sdx.fwd(participant.phys_ports[1]))
                 )
+    
+    #final_policy= (
+    #               (match_prefixes_set(set(['140.0.0.0/24'])) >> sdx.fwd(participant.phys_ports[0]))+
+    #               (match_prefixes_set(set(['150.0.0.0/24'])) >> sdx.fwd(participant.phys_ports[1]))
+    #            )
     
     return final_policy
