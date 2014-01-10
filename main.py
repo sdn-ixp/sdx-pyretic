@@ -57,10 +57,10 @@ cwd = os.getcwd()
 
 class sdx_policy(DynamicPolicy):
     """Standard MAC-learning logic"""
-    def __init__(self):
+    def __init__(self,arp_policy):
         
         ''' list of IP to MAC mapping '''
-        self.ip_mac_list = {}
+        self.arp_policy = arp_policy
         
         print "Initialize SDX"
         super(sdx_policy,self).__init__()
@@ -87,8 +87,8 @@ class sdx_policy(DynamicPolicy):
         rs_thread.start()
         
         ''' Update policies'''
-        #self.update_policy()
         event_queue.put("init")
+        #TODO: Should we send the loaded routes on bootup to the participants?
         
     def update_policy(self):
         
@@ -98,29 +98,36 @@ class sdx_policy(DynamicPolicy):
         ''' Get updated policy '''
         self.policy = sdx_platform(self.sdx)
         
+        print 'Final Policy'
+        print self.policy
+        
         ''' Get updated IP to MAC list '''
         # TODO: Maybe we won't have to update it that often - MS
-        self.ip_mac_list = get_ip_mac_list(self.sdx.VNH_2_IP,self.sdx.VNH_2_mac)
+        #       Need efficient implementation of this ...
+        self.arp_policy.mac_of = get_ip_mac_list(self.sdx.VNH_2_IP,self.sdx.VNH_2_MAC)
     
 '''' Dynamic update policy handler '''
 def dynamic_update_policy_event_hadler(event_queue,ready_queue,update_policy):
     
     while True:
-        event_queue.get()
+        event_source=event_queue.get()
         
         ''' Compile updates '''
         update_policy()
         
-        ready_queue.put('bgp')
+        if ('bgp' in event_source):
+            ready_queue.put(event_source)
 
         
 ''' Main '''
 def main():
     
-    policy = sdx_policy()
+    arp_policy = arp()
+    
+    policy = sdx_policy(arp_policy)
     
     return if_(ARP,
-                   arp(policy.ip_mac_list),
+                   arp_policy,
                    if_(BGP,
                            identity,
                            policy

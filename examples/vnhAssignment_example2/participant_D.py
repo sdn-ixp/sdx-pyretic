@@ -73,4 +73,5 @@ def policy(participant, sdx):
     final_policy= (
                    (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
                 )
+    
     return final_policy

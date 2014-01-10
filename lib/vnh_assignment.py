@@ -120,9 +120,16 @@ def get_part2prefixes(sdx,plist):
     for participant in sdx.participants:
         policy = sdx.participants[participant].policies
         pfxlist = []
+        final_pfxlist = []
         acc = []
         pfxlist, acc = get_prefix(policy, plist, pfxlist, participant, sdx)
-        p2pfx[participant] = pfxlist
+        
+        for pfx_item in pfxlist:
+            if (pfx_item):
+                final_pfxlist.append(pfx_item)
+                
+        if (final_pfxlist):
+            p2pfx[participant] = final_pfxlist
     
     return p2pfx
     
@@ -201,24 +208,27 @@ def extract_all_forward_actions_from_policy(policy, acc=[]):
         fwd_set = set()
         for sub_policy in policy.policies:
             ans = extract_all_forward_actions_from_policy(sub_policy)
-            try:
-                iterator = iter(ans)
-            except TypeError:
-                if ans is not None:
-                    fwd_set.add(ans)
-            else:
-                for elem in ans:
-                    if elem is not None:
-                        fwd_set.add(elem)
+            
+            #TODO: this logic seems superficial
+            #try:
+            #    iterator = iter(ans)
+            #except TypeError:    
+                #if ans is not None:
+                #    fwd_set.add(ans)
+            #else:
+            
+            for elem in ans:
+                if elem is not None:
+                    fwd_set.add(elem)
         return fwd_set
     elif isinstance(policy, if_):
         return extract_all_forward_actions_from_policy(policy.t_branch) | extract_all_forward_actions_from_policy(policy.f_branch)
     else:
         # Base call
         if isinstance(policy, fwd):
-            return policy.outport
+            return set([policy.outport])
         else:
-            return None
+            return set()
     
 def step5b_expand_policy_with_vnhop(policy, participant_id, part_2_VNH, VNH_2_mac, acc=[]):
     # Recursive call
@@ -240,9 +250,15 @@ def step5b_expand_policy_with_vnhop(policy, participant_id, part_2_VNH, VNH_2_ma
                 unique_vnhops.add(vnhop)
             # print unique_vnhops
             acc = list(unique_vnhops)
-            match_vnhops = match(dstmac=unique_vnhops.pop())
-            for vnhop in unique_vnhops:
-                match_vnhops = match_vnhops + match(dstmac=vnhop)
+            
+            if acc:
+                match_vnhops = match(dstmac=unique_vnhops.pop())
+                for vnhop in unique_vnhops:
+                    match_vnhops = match_vnhops + match(dstmac=vnhop)
+            else: 
+                # TODO: adding temporary glue logic 
+                match_vnhops = match(dstmac=VNH_2_mac['VNH'])
+                
             # print match_vnhops           
             # print 'acc1: ',acc
             # print policy           
@@ -260,10 +276,10 @@ def step5b(policy, participant, part_2_VNH, VNH_2_mac, participant_list, sdx):
     expanded_vnhop_policy = step5b_expand_policy_with_vnhop(policy, participant, part_2_VNH, VNH_2_mac)
     
     policy_matches = extract_all_matches_from_policy(expanded_vnhop_policy)
-    if participant in sdx.participants:
+    if participant in sdx.participants and policy_matches is not None:
         # print 'BIG Match: ',policy_matches
         bgp = step5b_expand_policy_with_vnhop(get_default_forwarding_policy(bgp_get_best_routes(sdx,participant), participant, participant_list), participant, part_2_VNH, VNH_2_mac)
-        # print bgp   
+        # print bgp
         return if_(policy_matches, expanded_vnhop_policy, bgp)
     else:
         return expanded_vnhop_policy
@@ -289,10 +305,10 @@ def extract_all_matches_from_policy(policy, acc=[]):
         sys.exit(-1)
     else:
         # Base call
-        if isinstance(policy, fwd):
-            return None
-        else:
+        if isinstance(policy, match):
             return policy
+        else:
+            return None
 
 def step4(lcs,part_2_VNH,VNH_2_pfx,VNH_2_IP,VNH_2_MAC,part_2_prefix_updated):
     count = 1
@@ -305,7 +321,7 @@ def step4(lcs,part_2_VNH,VNH_2_pfx,VNH_2_IP,VNH_2_MAC,part_2_prefix_updated):
         VNH_2_pfx[vname] = pset
         for participant in part_2_prefix_updated:
             #print part_2_prefix_updated
-            if pset in part_2_prefix_updated[participant]:
+            if list(pset) in part_2_prefix_updated[participant]:
                 if participant not in part_2_VNH:
                     part_2_VNH[participant] = {}
                 part_2_VNH[participant][vname] = pset
@@ -339,7 +355,8 @@ def step5a_expand_policy_with_prefixes(policy, participant, plist, sdx, acc=[]):
 def step5a(policy, participant, participant_list, sdx, include_default_policy=False):
     p1 = step5a_expand_policy_with_prefixes(policy, participant, participant_list, sdx)
     if include_default_policy:
-        p1 = p1 >> get_default_forwarding_policy(participant)
+        # TODO: this should be a + operator rather than >>
+        p1 = p1 + get_default_forwarding_policy(bgp_get_best_routes(sdx,participant),participant,participant_list)
     return p1
 
 
@@ -362,8 +379,13 @@ def vnh_assignment(sdx):
     
     # Add the prefixes for default forwarding policies now
     for participant in sdx.participants:
-        participant_2_prefix[participant] = participant_2_prefix[participant] + [x for x in bgp_get_best_routes(sdx,participant).values() if x]
-        
+        best_routes_list = [x for x in bgp_get_best_routes(sdx,participant).values() if x]
+            
+        if best_routes_list:
+            if (participant in participant_2_prefix):
+                participant_2_prefix[participant] = participant_2_prefix[participant] + best_routes_list
+            else:
+                participant_2_prefix[participant] = best_routes_list
     #----------------------------------------------------------------------------------------------------#
     
     # # Update the sdx part_2_prefix_old data structure, it will be used in VNH recompute
@@ -372,46 +394,53 @@ def vnh_assignment(sdx):
                         
     # Step 2 & 3
     print 'Before Set operations: ', participant_2_prefix
-    part_2_prefix_updated, lcs = lcs_multiprocess(participant_2_prefix)
-    print 'After Set operations: ', part_2_prefix_updated, sdx.part_2_prefix_old
-    sdx.part_2_prefix_lcs = part_2_prefix_updated
-    sdx.lcs_old = lcs
+    
+    if (participant_2_prefix):
+    
+        part_2_prefix_updated, lcs = lcs_parallel(participant_2_prefix)
+        print 'After Set operations: ', part_2_prefix_updated, sdx.part_2_prefix_old
+        sdx.part_2_prefix_lcs = part_2_prefix_updated
+        sdx.lcs_old = lcs
         
-    #----------------------------------------------------------------------------------------------------#
+        #----------------------------------------------------------------------------------------------------#
     
-    # Step 4: Assign VNHs
-    part_2_VNH = {}
-    VNH_2_pfx = {}
-    step4(lcs,part_2_VNH,VNH_2_pfx,VNH_2_IP,VNH_2_MAC,part_2_prefix_updated)
-    print "After new assignment"                    
-    print part_2_VNH
-    print VNH_2_pfx
-    print VNH_2_IP
-    print VNH_2_MAC
-    sdx.VNH_2_pfx = VNH_2_pfx
-    sdx.part_2_VNH=part_2_VNH
-    sdx.VNH_2_IP=VNH_2_IP
-    sdx.VNH_2_mac=VNH_2_MAC    
+        # Step 4: Assign VNHs
+        part_2_VNH = {}
+        VNH_2_pfx = {}
+        step4(lcs,part_2_VNH,VNH_2_pfx,VNH_2_IP,VNH_2_MAC,part_2_prefix_updated)
+        print "After new assignment"                    
+        print part_2_VNH
+        print VNH_2_pfx
+        print VNH_2_IP
+        print VNH_2_MAC
+        sdx.VNH_2_pfx = VNH_2_pfx
+        sdx.part_2_VNH=part_2_VNH
+        sdx.VNH_2_IP=VNH_2_IP
+        sdx.VNH_2_mac=VNH_2_MAC    
     
-    #----------------------------------------------------------------------------------------------------#
+        #----------------------------------------------------------------------------------------------------#
     
-    # TODO: create proper corner case logic - MS
-    if (sdx.part_2_VNH):
-        # Step 5
-        # Step 5a: Get expanded policies
+        # TODO: create proper corner case logic - MS
+        if (sdx.part_2_VNH):
+            # Step 5
+            # Step 5a: Get expanded policies
+            for participant in sdx.participants:
+                #print "PARTICIPANT: ",participant
+                X_policy = sdx.participants[participant].policies
+                #print "Original policy:", X_policy
+        
+                X_a = step5a(X_policy, participant, participant_2_port, sdx)
+                #print "Policy after 5a:\n\n", X_a
+        
+                X_b = step5b(X_a, participant, part_2_VNH, VNH_2_MAC, participant_2_port, sdx)
+                #print "Policy after Step 5b:", X_b
+
+                sdx.participants[participant].policies = X_b
+    else:
         for participant in sdx.participants:
             #print "PARTICIPANT: ",participant
-            X_policy = sdx.participants[participant].policies
-            #print "Original policy:", X_policy
-        
-            X_a = step5a(X_policy, participant, participant_2_port, sdx)
-            #print "Policy after 5a:\n\n", X_a
-        
-            X_b = step5b(X_a, participant, part_2_VNH, VNH_2_MAC, participant_2_port, sdx)
-            #print "Policy after Step 5b:", X_b
+            sdx.participants[participant].policies = drop   
 
-            sdx.participants[participant].policies = X_b
-   
 def pre_VNH(policy, sdx, participant_name,participant):
     if isinstance(policy, parallel):
         return parallel(map(lambda p: pre_VNH(p, sdx, participant_name,participant), policy.policies))

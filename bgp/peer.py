@@ -21,11 +21,12 @@ class peer():
         as_path = None
         med = None
         atomic_aggregate = None
+        route_list = []
         
         if ('neighbor' in route):
             if ('ip' in route['neighbor']):
-                # Only add to the RIB if it's from a participant who other than myself.
-                if (route['neighbor']['ip'] not in self.ips):
+                # Only add to the RIB if it's for myself.
+                if (route['neighbor']['ip'] in self.ips):
                     if ('update' in route['neighbor']):
                         if ('attribute' in route['neighbor']['update']):
                             attribute = route['neighbor']['update']['attribute']
@@ -44,14 +45,9 @@ class peer():
                                                                  med,
                                                                  atomic_aggregate)
                                     self.rib["input"].commit()
-                                    best_route = decision_process(self.rib["input"],prefix)
+                                    best_route = self.rib["input"][prefix]
                                     
-                                    if (best_route is not None):
-                                        self.rib["local"].delete(prefix)
-                                        self.rib["local"][prefix] = best_route
-                                        self.rib["local"].commit()
-                                        #queue.put(self.announce_route(best_route))
-                                        return {'announce':best_route}
+                                    route_list.append({'announce': best_route})
 
                         elif ('withdraw' in route['neighbor']['update']):
                             withdraw = route['neighbor']['update']['withdraw']
@@ -60,15 +56,13 @@ class peer():
                                     deleted_route = self.rib["input"][prefix]
                                     self.rib["input"].delete(prefix)
                                     self.rib["input"].commit()
-                                    self.rib["local"].delete(prefix)
-                                    self.rib["local"].commit()
-                                    #queue.put(self.withdraw_route(deleted_route))   
+                                    
+                                    route_list.append({'withdraw': deleted_route})
                                     # TODO: clarify how the route withdrawal will work i.e., do we have to run the decision process again
-                                    return {'withdraw':deleted_route}
-        
+                                    
         elif ('notification' in route):
             
-            return
+            #return
             
             if ('shutdown' == route['notification']):
                 self.rib["input"].delete_all()
@@ -77,7 +71,7 @@ class peer():
                 self.rib["local"].commit()
                 # TODO: send shutdown notification to participants 
         
-        return 
+        return route_list
     
     def add_route(self,rib_name,prefix,attributes):
         self.rib[rib_name][prefix] = attributes
@@ -162,7 +156,7 @@ def withdraw_route(route,next_hop=None):
             
         value = "withdraw route " + route['prefix'] + " next-hop " + inext_hop
         
-        if ('as-path' in route):
+        if ('as_path' in route.keys()):
             value += " as-path [ " + route['as_path'] + " ]"
             
         return value

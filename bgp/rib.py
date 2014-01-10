@@ -92,7 +92,7 @@ class rib():
         with lock():
             cursor = self.db.cursor()
         
-            script = "select * from " + self.name + " where " + item + " like '%" + value + "%'"
+            script = "select * from " + self.name + " where " + item + " = '" + value + "'"
         
             cursor.execute(script)
         

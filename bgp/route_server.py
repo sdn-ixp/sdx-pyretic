@@ -41,26 +41,32 @@ class route_server():
             updates = []
                 
             for participant_name in self.sdx.participants:
-                updates.append(self.sdx.participants[participant_name].rs_client.update(route))
-           
-            bgp_trigger_update(self.event_queue,self.ready_queue)
-           
-            # TODO: Need to perform some testing to verify performance affect due to updates
-            
+                route_list = self.sdx.participants[participant_name].rs_client.update(route)
+                for route_item in route_list:
+                    updates.append(decision_process(self.sdx.participants,route_item))
+                    
+            # Check for withdraw routes
             for update in updates:
                 if (update is None):
                     continue
-                if ('announce' in update):
-                    for VNH in self.sdx.VNH_2_pfx:
-                        if(update['announce']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
-                            self.server.sender_queue.put(announce_route(update['announce'],self.sdx.VNH_2_IP[VNH]))
-                            break
                 elif ('withdraw' in update):
+                    # TODO: need to correct this glue logic
                     for VNH in self.sdx.VNH_2_pfx:
                         if(update['withdraw']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
                             self.server.sender_queue.put(withdraw_route(update['withdraw'],self.sdx.VNH_2_IP[VNH]))
-                            break
-            
+                            break # all new updates announced
+           
+            # Trigger policy updates
+            bgp_trigger_update(self.event_queue,self.ready_queue)
+           
+            # Check for announced routes         
+            if (updates):
+                # TODO: need to correct this glue logic
+                for VNH in self.sdx.VNH_2_pfx:
+                    for prefix in list(self.sdx.VNH_2_pfx[VNH]):
+                        route = self.sdx.participants[participant_name].rs_client.get_route('local',prefix)
+                        self.server.sender_queue.put(announce_route(route,self.sdx.VNH_2_IP[VNH]))
+                    
 ''' main '''    
 if __name__ == '__main__':
     

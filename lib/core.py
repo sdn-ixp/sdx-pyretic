@@ -57,28 +57,27 @@ from pyretic.sdx.lib.vnh_assignment import *
 ###
 # TODO: These should be automatically generated using the sdx_config.cfg file
 
-participant_2_port={'A':{'A':[1],'B':[2],'C':[3],'D':[4]},
-                    'B':{'A':[1],'B':[2,21,22],'C':[3],'D':[4]},
-                    'C':{'A':[1],'B':[2],'C':[3],'D':[4]},
-                    'D':{'A':[1],'B':[2],'C':[3],'D':[4]}
+participant_2_port={'A':{'A':[2],'B':[3],'C':[4],'D':[6]},
+                    'B':{'A':[2],'B':[3],'C':[4],'D':[6]},
+                    'C':{'A':[2],'B':[3],'C':[4,5],'D':[6]},
+                    'D':{'A':[2],'B':[3],'C':[4],'D':[6]}
                    }
 
 port_2_participant = {
-        1  : 'A',
-        2  : 'B',
-        21 : 'B',
-        22 : 'B',
-        3  : 'C',
-        4  : 'D'
+        2  : 'A',
+        3  : 'B',
+        4  : 'C',
+        5  : 'C',
+        6  : 'D'
     }
 
 # TODO: these should be added in the config file too and auto-generated
 VNH_2_IP = {
-            'VNH':list(IPNetwork('172.0.0.1/28'))
-          }
-VNH_2_MAC={
-            'VNH':'AA:00:00:00:00:00'
-          }
+            'VNH':list(IPNetwork('172.0.1.1/28'))
+           }
+VNH_2_MAC= {
+            'VNH':'aa:00:00:00:00:00'
+           }
 
 #peer_groups={'pg1':[1,2,3,4]}
 

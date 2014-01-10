@@ -3,6 +3,7 @@
 #  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
 #  Sean Donovan
 import socket,struct
+
 ''' BGP decision process '''
 def decision_process(rib,prefix):
     # TODO: add the actual best-path selection algorithm.
@@ -89,7 +90,6 @@ def decision_process(rib,prefix):
 
     return post_med_best_routes[get_index(post_med_best_routes, 'origin', long_to_ip(lowest_ip_as_long))]
 
-        
     
 def aspath_length(as_path):
     ases = as_path.split()
