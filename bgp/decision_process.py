@@ -37,7 +37,6 @@ def decision_process(rib,prefix):
 
     # If there's only 1, it's the best route    
     if len(best_routes) == 1:
-        print "return 1"
         return best_routes.pop()
 
     
@@ -73,32 +72,32 @@ def decision_process(rib,prefix):
                 j += 1
             
             # add to post-MED list - this could be more than one if MEDs match
-            post_med_best_routes.append(list(x for x in from_as_list if
-                                        x['med'] == lowest_med))
+            temproutes = (x for x in from_as_list if x['med'] == lowest_med)
+            for el in temproutes:
+                post_med_best_routes.append(el)
             i = i + as_list.count(as_list[i])
         else:
-            
-            post_med_best_routes.append(list(x for x in best_routes if get_advertised_as(x['as_path']) == as_list[i]))
+            temproutes = (x for x in best_routes if get_advertised_as(x['as_path']) == as_list[i])
+            for el in temproutes:
+                post_med_best_routes.append(el)
             i += 1
     
     # If there's only 1, it's the best route
     if len(post_med_best_routes) == 1:
-        print "return 2"
         return post_med_best_routes.pop()
 
 
     #Lowest Router ID - Origin IP of the routers left.
     i = 0
-    lowest_ip_as_long = ip_to_long(post_med_best_routes[i]['origin'])
+    lowest_ip_as_long = ip_to_long(post_med_best_routes[i]['next_hop'])
     i += 1
     while i < len(post_med_best_routes):
-        if lowest_ip_as_long > ip_to_long(post_med_best_routes[i]['origin']):
-            lowest_ip_as_long = ip_to_long(post_med_best_routes[i]['origin'])
+        if lowest_ip_as_long > ip_to_long(post_med_best_routes[i]['next_hop']):
+            lowest_ip_as_long = ip_to_long(post_med_best_routes[i]['next_hop'])
         i += 1
     
 
-    returnval = post_med_best_routes[get_index(post_med_best_routes, 'origin', long_to_ip(lowest_ip_as_long))]
-    print "return 3"
+    returnval = post_med_best_routes[get_index(post_med_best_routes, 'next_hop', long_to_ip(lowest_ip_as_long))]
     return returnval
 
     
