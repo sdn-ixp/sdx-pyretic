@@ -22,7 +22,7 @@ def decision_process(participants, route):
             participants[participant_name].rs_client.rib["local"][prefix] = best_route
             participants[participant_name].rs_client.rib["local"].commit()
 
-            #FIXME - RETURN VALUES!
+        return route
     elif('withdraw' in route):
         deleted_route = route['withdraw']
         if (deleted_route is not None):
@@ -39,7 +39,7 @@ def decision_process(participants, route):
                     best_route = best_path_selection(routes)
                     participants[participant_name].rs_client.rib["local"][prefix] = best_route
                     participants[participant_name].rs_client.rib["local"].commit()
-                #FIXME - RETURN VALUES!
+        return route
 
 #Need to fill out local rib
 
