@@ -5,10 +5,49 @@
 import socket,struct
 from rib import rib
 
+def decision_process(participants, route):
+    prefix = route['prefix']
+    #Need to loop through all participants
+    if ('announce' in route):
+        for participant_name in participants:
+            routes = []
+            #Need to loop through participants to build up routes, don't include current participant 
+            for input_particpant_name in participants:
+                if participant_name == input_particpant_name:
+                    continue
+                routes.append(participants[input_participant_name].rs_client.rib["input"].get_all(prefix))
+            best_route = best_path_selection(routes)
+            #FIXME - can be optimized? check to see if current route == best_route?
+            participants[participant_name].rs_client.rib["local"].delete(prefix)
+            participants[participant_name].rs_client.rib["local"][prefix] = best_route
+            participants[participant_name].rs_client.rib["local"].commit()
+
+            #FIXME - RETURN VALUES!
+    elif('withdraw' in route):
+        deleted_route = route['withdraw']
+        if (deleted_route is not None):
+            for particpant_name in participants:
+                #delete route if being used
+                if (participants[participant_name].rs_client.rib["local"][prefix] == deleted_route):
+                    participants[participant_name].rs_client.rib["local"].delete(prefix)
+                    
+                    routes = []
+                    for input_particpant_name in participants:
+                        if participant_name == input_particpant_name:
+                            continue
+                        routes.append(participants[input_participant_name].rs_client.rib["input"].get_all(prefix))
+                    best_route = best_path_selection(routes)
+                    participants[participant_name].rs_client.rib["local"][prefix] = best_route
+                    participants[participant_name].rs_client.rib["local"].commit()
+                #FIXME - RETURN VALUES!
+
+#Need to fill out local rib
+
 ''' BGP decision process '''
-def decision_process(rib,prefix):
-    # TODO: add the actual best-path selection algorithm.
-    routes = rib.get_all(prefix)
+def best_path_selection(routes):
+
+
+#FIXME: this decision process would need to be changed if there are input and 
 
 # Priority of rules to make decision:
 # ---- 0. [Vendor Specific - Cisco has a "Weight"]
