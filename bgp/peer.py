@@ -44,9 +44,9 @@ class peer():
                                                                  med,
                                                                  atomic_aggregate)
                                     self.rib["input"].commit()
-                                    best_route = self.rib["input"][prefix]
+                                    announce_route = self.rib["input"][prefix]
                                     
-                                    route_list.append({'announce': best_route})
+                                    route_list.append({'announce': announce_route})
 
                         elif ('withdraw' in route['neighbor']['update']):
                             withdraw = route['neighbor']['update']['withdraw']
@@ -83,6 +83,10 @@ class peer():
     def get_route(self,rib_name,prefix):
         
         return self.rib[rib_name][prefix]
+    
+    def get_routes(self,rib_name,prefix):
+        
+        return self.rib[rib_name].get_all(prefix)
     
     def get_all_routes(self, rib_name):
         

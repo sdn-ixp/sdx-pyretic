@@ -2,6 +2,30 @@
 #  Author:
 #  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
 
+''' Announce route '''
+def bgp_announce_route(sdx,route):
+    if isinstance(route,dict):
+        route_json = '''{ "neighbor": { 
+                         "ip": "'''+route["ip"]+'''",
+                         "update": { 
+                             "attribute": { 
+                                 "origin": "'''+route["origin"]+'''", 
+                                 "as-path": ['''+route["as-path"]+'''], 
+                                 "atomic-aggregate": '''+route["atomic-aggregate"]+''', 
+                                 "med": '''+route["med"]+''' 
+                             }, 
+                             "announce": { 
+                                 "ipv4 unicast": { 
+                                     "'''+route["prefix"]+'''": { 
+                                         "next-hop": "'''+route["next-hop"]+'''" 
+                                     } 
+                                 } 
+                             } 
+                         } 
+                     } 
+                }'''
+        sdx.server.receiver_queue.put(route_json)
+
 ''' Get best routes for a participant '''
 def bgp_get_best_routes(sdx,participant_name):    
     
@@ -46,8 +70,19 @@ def bgp_trigger_update(event_queue,ready_queue):
     event_queue.put("bgp")
     
     ''' Wait for the policies to get updated ''' 
-
+    
+    #TODO: optimize the above logic for ready_queue - MS
     while (ready_queue.get() != 'bgp'):
         pass
 
+
+''' main '''    
+if __name__ == '__main__':
+    route = {'prefix': '100.0.0.0/24',
+             'origin': 'igp',
+             'med': '0',
+             'as_path': "100",
+             'next_hop': "172.0.3.1"}
+    
+    bgp_announce_route(None,route)
     

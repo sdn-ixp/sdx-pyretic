@@ -62,7 +62,7 @@ class VirtualPort(Port):
 
 class SDXParticipant(object):
     """Represent a particular SDX participant"""
-    def __init__(self, id_, vport, phys_ports, peers={}, policies=None, rs_client=None):
+    def __init__(self, id_, vport, phys_ports, peers={}, policies=None, rs_client=None, custom_routes=[]):
         self.id_ = id_
         self.vport = vport
         self.phys_ports = phys_ports
@@ -72,6 +72,7 @@ class SDXParticipant(object):
         self.vport.participant = self ## set the participant
         self.n_policies=0
         self.rs_client=rs_client
+        self.custom_routes=custom_routes
     
     def init_policy(self,new_policy):
         self.policies=new_policy

@@ -107,6 +107,8 @@ VNH_2_MAC= {
 class SDX(object):
     """Represent a SDX platform configuration"""
     def __init__(self):
+        self.server = None
+        
         self.participants = {}
         
         self.sdx_ports={}
@@ -329,3 +331,26 @@ def sdx_parse_policies(policy_file,sdx):
         classifier.append(sdx.participants[participant_name].policies.compile())
         print participant_name, time.time() - start_comp, "seconds"
     
+def sdx_parse_announcements(announcement_file,sdx):
+        
+    sdx_announcements = json.load(open(announcement_file,'r'))  
+    ''' 
+        Get participants custom routes
+    '''
+    for participant_name in sdx_announcements:
+        participant = sdx.participants[participant_name]
+        announcement_modules = [import_module(sdx_announcements[participant_name][i]) 
+                          for i in range(0, len(sdx_announcements[participant_name]))]
+        
+        participant.custom_routes = []
+        for announcement_module in announcement_modules:
+            participant.custom_routes.extend(announcement_module.custom_routes(participant,sdx))
+        
+def sdx_annouce_custom_routes(sdx):
+    ''' 
+        Announce participants custom routes
+    '''
+    
+    for participant_name in sdx.participants:
+        for route in sdx.participants[participant_name].custom_routes:
+            bgp_announce_route(sdx,route)

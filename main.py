@@ -89,6 +89,10 @@ class sdx_policy(DynamicPolicy):
         ''' Update policies'''
         event_queue.put("init")
         #TODO: Should we send the loaded routes on bootup to the participants?
+    
+        ''' Announce custom routes '''
+        sdx_parse_announcements(cwd+'/pyretic/sdx/sdx_announcements.cfg',self.sdx)
+        sdx_annouce_custom_routes(self.sdx)
         
     def update_policy(self):
         

@@ -9,8 +9,8 @@
 #        Software Defined Exchange (SDX)
 #
 #  Author:        
-#        Arpit Gupta
 #        Muhammad Shahbaz
+#        Arpit Gupta
 #        Laurent Vanbever
 #
 #  Copyright notice:
@@ -49,31 +49,15 @@ import os
 
 cwd = os.getcwd()
 
-def parse_config(config_file):
-    participants = json.load(open(config_file, 'r'))
+def custom_routes(participant,sdx):
+    ''' Custom routes '''
     
-    for participant_name in participants:
-        for i in range(len(participants[participant_name]["IPP"])):
-            participants[participant_name]["IPP"][i] = IPPrefix(participants[participant_name]["IPP"][i])    
-    return participants
+    routes = [{'prefix': '100.0.0.0/24',
+             'origin': 'igp',
+             'med': '0',
+             'as-path': '100',
+             'next-hop': '172.0.0.1',
+             'atomic-aggregate': 'false',
+             'ip': str(participant.phys_ports[0].ip)}]
 
-def policy(participant, sdx):
-    '''
-        Specify participant policy
-    '''
-    
-    #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
-    prefixes_announced=bgp_get_announced_routes(sdx,'A')
-    
-    #final_policy = ((match(dstport=80) >> sdx.fwd(participant.peers['B']))+
-    #                (match(dstport=22) >> sdx.fwd(participant.peers['C']))+
-    #                (match(dstport=1024) >> sdx.fwd(participant.peers['C']))+
-    #                (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
-    #               )
-    
-    final_policy= (
-                   (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
-                )
-    
-    #print final_policy            
-    return final_policy
+    return routes

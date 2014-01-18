@@ -10,17 +10,20 @@ from multiprocessing.connection import Listener
 class server():
     
     def __init__(self):
-        listener = Listener(('localhost', 6000), authkey='sdx')
-        self.conn = listener.accept()
-        print 'Connection accepted from', listener.last_accepted
+        self.listener = Listener(('localhost', 6000), authkey='sdx')
         
         self.sender_queue = Queue()
-        sender = Thread(target=_sender, args=(self.conn,self.sender_queue))
-        sender.start()
-        
         self.receiver_queue = Queue()
-        receiver = Thread(target=_receiver, args=(self.conn,self.receiver_queue))
-        receiver.start()
+        
+    def start(self):
+        self.conn = self.listener.accept()
+        print 'Connection accepted from', self.listener.last_accepted
+        
+        self.sender = Thread(target=_sender, args=(self.conn,self.sender_queue))
+        self.sender.start()
+        
+        self.receiver = Thread(target=_receiver, args=(self.conn,self.receiver_queue))
+        self.receiver.start()
     
 ''' sender '''
 def _sender(conn,queue):
