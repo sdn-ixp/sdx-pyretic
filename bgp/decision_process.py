@@ -5,84 +5,95 @@
 import socket,struct
 from rib import rib
 
-def decision_process(participants, route):
-    prefix = route['prefix']
+def decision_process(participants,route):
+    best_routes = []
+    
     #Need to loop through all participants
     if ('announce' in route):
+        announce_route = route['announce']
+        
         for participant_name in participants:
             routes = []
             #Need to loop through participants to build up routes, don't include current participant 
-            for input_particpant_name in participants:
-                if participant_name == input_particpant_name:
-                    continue
-                routes.append(participants[input_participant_name].rs_client.rib["input"].get_all(prefix))
-            best_route = best_path_selection(routes)
-            #FIXME - can be optimized? check to see if current route == best_route?
-            participants[participant_name].rs_client.rib["local"].delete(prefix)
-            participants[participant_name].rs_client.rib["local"][prefix] = best_route
-            participants[participant_name].rs_client.rib["local"].commit()
+            for input_participant_name in participants:
+                if participant_name != input_participant_name:
+                    routes.extend(participants[input_participant_name].rs_client.get_routes('input',announce_route['prefix']))
+            
+            if routes:
+                best_route = best_path_selection(routes)
+                best_routes.append({'announce':best_route})
+            
+                # TODO: can be optimized? check to see if current route == best_route?
+                participants[participant_name].rs_client.delete_route("local",announce_route['prefix'])
+                participants[participant_name].rs_client.add_route("local",best_route['prefix'],best_route)
 
-        return route
     elif('withdraw' in route):
         deleted_route = route['withdraw']
+        
         if (deleted_route is not None):
-            for particpant_name in participants:
-                #delete route if being used
-                if (participants[participant_name].rs_client.rib["local"][prefix] == deleted_route):
-                    participants[participant_name].rs_client.rib["local"].delete(prefix)
+            for participant_name in participants:
+                
+                # delete route if being used
+                if (participants[participant_name].rs_client.get_routes('local',deleted_route['prefix'])):
+                    participants[participant_name].rs_client.delete_route("local",deleted_route['prefix'])
                     
                     routes = []
-                    for input_particpant_name in participants:
-                        if participant_name == input_particpant_name:
-                            continue
-                        routes.append(participants[input_participant_name].rs_client.rib["input"].get_all(prefix))
-                    best_route = best_path_selection(routes)
-                    participants[participant_name].rs_client.rib["local"][prefix] = best_route
-                    participants[participant_name].rs_client.rib["local"].commit()
-        return route
-
-#Need to fill out local rib
+                    for input_participant_name in participants:
+                        if participant_name != input_participant_name:
+                            routes.extend(participants[input_participant_name].rs_client.get_routes('input',deleted_route['prefix']))
+                    
+                    if routes:
+                        best_route = best_path_selection(routes)
+                        best_routes.append({'withdraw':best_route})
+                    
+                        participants[participant_name].rs_client.add_route("local",best_route['prefix'],best_route)
+    
+    return best_routes
 
 ''' BGP decision process '''
 def best_path_selection(routes):
 
+    # Priority of rules to make decision:
+    # ---- 0. [Vendor Specific - Cisco has a "Weight"]
+    # ---- 1. Highest Local Preference
+    # 2. Lowest AS Path Length
+    # ---- 3. Lowest Origin type - Internal preferred over external
+    # 4. Lowest  MED
+    # ---- 5. eBGP learned over iBGP learned - so if the above's equal, and you're at a border router, send it out to the next AS rather than transiting     
+    # ---- 6. Lowest IGP cost to border routes
+    # 7. Lowest Router ID (tie breaker!)
+    #
+    # I believe that steps 0, 1, 3, 5, and 6 are out
 
-#FIXME: this decision process would need to be changed if there are input and 
-
-# Priority of rules to make decision:
-# ---- 0. [Vendor Specific - Cisco has a "Weight"]
-# ---- 1. Highest Local Preference
-# 2. Lowest AS Path Length
-# ---- 3. Lowest Origin type - Internal preferred over external
-# 4. Lowest  MED
-# ---- 5. eBGP learned over iBGP learned - so if the above's equal, and you're at a border router, send it out to the next AS rather than transiting 
-# ---- 6. Lowest IGP cost to border routes
-# 7. Lowest Router ID (tie breaker!)
-#
-# I believe that steps 0, 1, 3, 5, and 6 are out
+    ''' 1. Lowest AS Path Length '''
+    
     best_routes = []
+
     for route in routes:
+            
         #find ones with smallest AS Path Length
-        if len(best_routes) == 0:
+        if not best_routes:
             #prime the pump
-            min_route_len = aspath_length(route['as_path'])
+            min_route_length = aspath_length(route['as_path'])
             best_routes.append(route)
-        elif min_route_len == aspath_length(route['as_path']):
+        elif min_route_length == aspath_length(route['as_path']):
             best_routes.append(route)
-        elif min_route_len > aspath_length(route['as_path']):
-            clear_list(best_routes)
-            min_route_len = aspath_length(route['as_path'])
+        elif min_route_length > aspath_length(route['as_path']):
+            best_routes = []
+            min_route_length = aspath_length(route['as_path'])
             best_routes.append(route)
 
     # If there's only 1, it's the best route    
+    
     if len(best_routes) == 1:
         return best_routes.pop()
 
-    
+    ''' 2. Lowest MED '''
+
     # Compare the MED only among routes that have been advertised by the same AS. 
     # Put it differently, you should skip this step if two routes are advertised by two different ASes. 
     
-    # get all the ASes advertising the route
+    # get the list of origin ASes
     as_list = []
     post_med_best_routes = []
     for route in best_routes:
@@ -94,16 +105,16 @@ def best_path_selection(routes):
 
     i = 0
     while i < len(as_list):
-        if as_list.count(as_list[i]) != 1:
+        
+        if as_list.count(as_list[i]) > 1:
+            
             # get all that match the particular AS
-#            from_as_list = (x for x in best_routes if get_advertised_as('as-path' in x) == as_list[i])
-            from_as_list = []
-            from_as_list = (x for x in best_routes if get_advertised_as(x['as_path']) == as_list[i])
+            from_as_list = [x for x in best_routes if get_advertised_as(x['as_path'])==as_list[i]]
 
             # MED comparison here
             j = 0
-            from_as_list = list(from_as_list)
             lowest_med = from_as_list[j]['med']
+            
             j += 1
             while j < len(from_as_list):
                 if lowest_med > from_as_list[j]['med']:
@@ -111,13 +122,15 @@ def best_path_selection(routes):
                 j += 1
             
             # add to post-MED list - this could be more than one if MEDs match
-            temproutes = (x for x in from_as_list if x['med'] == lowest_med)
-            for el in temproutes:
+            temp_routes = [x for x in from_as_list if x['med']==lowest_med]
+            for el in temp_routes:
                 post_med_best_routes.append(el)
-            i = i + as_list.count(as_list[i])
+            
+            i = i+as_list.count(as_list[i])
+        
         else:
-            temproutes = (x for x in best_routes if get_advertised_as(x['as_path']) == as_list[i])
-            for el in temproutes:
+            temp_routes = [x for x in best_routes if get_advertised_as(x['as_path'])==as_list[i]]
+            for el in temp_routes:
                 post_med_best_routes.append(el)
             i += 1
     
@@ -125,21 +138,22 @@ def best_path_selection(routes):
     if len(post_med_best_routes) == 1:
         return post_med_best_routes.pop()
 
+    ''' 3. Lowest Router ID '''
 
-    #Lowest Router ID - Origin IP of the routers left.
+    # Lowest Router ID - Origin IP of the routers left.
     i = 0
     lowest_ip_as_long = ip_to_long(post_med_best_routes[i]['next_hop'])
+    
     i += 1
     while i < len(post_med_best_routes):
         if lowest_ip_as_long > ip_to_long(post_med_best_routes[i]['next_hop']):
             lowest_ip_as_long = ip_to_long(post_med_best_routes[i]['next_hop'])
         i += 1
     
-
-    returnval = post_med_best_routes[get_index(post_med_best_routes, 'next_hop', long_to_ip(lowest_ip_as_long))]
-    return returnval
+    return post_med_best_routes[get_index(post_med_best_routes,'next_hop',long_to_ip(lowest_ip_as_long))]
 
     
+''' Helper functions '''
 def aspath_length(as_path):
     ases = as_path.split()
     return len(ases)
@@ -148,24 +162,19 @@ def get_advertised_as(as_path):
     ases = as_path.split()
     return ases[0]
 
-def clear_list(list):
-    del list[:]
-
 def ip_to_long(ip):
     return struct.unpack('!L', socket.inet_aton(ip))[0]
 
 def long_to_ip(ip):
     return socket.inet_ntoa(struct.pack('!L', ip))
       
-
 def get_index(seq, attr, value):
     return next(index for (index, d) in enumerate(seq) if d[attr] == value)
 
 
-
-
 ''' main '''    
 if __name__ == '__main__':
+    
     passed_tests = 0
     failed_tests = 0
     # AS tests
@@ -205,16 +214,10 @@ if __name__ == '__main__':
     #                          'med':'0', 'atomic_aggregate':'false'}
     myrib.commit()
     
-    
-    
     myrib.update('100.0.0.1/16', 'next_hop', '190.0.0.2')
     myrib.commit()
     
     print decision_process(myrib,"100.0.0.1/16")
-
-    
-
-
 
     print "Passed:", passed_tests
     print "Failed:", failed_tests
