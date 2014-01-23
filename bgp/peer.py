@@ -29,10 +29,10 @@ class peer():
                     if ('update' in route['neighbor']):
                         if ('attribute' in route['neighbor']['update']):
                             attribute = route['neighbor']['update']['attribute']
-                            origin = attribute['origin']
-                            as_path = attribute['as-path']
-                            med = attribute['med']
-                            atomic_aggregate = attribute['atomic-aggregate']
+                            origin = attribute['origin'] if 'origin' in attribute else ''
+                            as_path = attribute['as-path'] if 'as-path' in attribute else ''
+                            med = attribute['med'] if 'med' in attribute else ''
+                            atomic_aggregate = attribute['atomic-aggregate'] if 'atomic-aggregate' in attribute else ''
                             
                         if ('announce' in route['neighbor']['update']):
                             announce = route['neighbor']['update']['announce']
@@ -40,7 +40,7 @@ class peer():
                                 for prefix in announce['ipv4 unicast'].keys():
                                     self.rib["input"][prefix] = (announce['ipv4 unicast'][prefix]['next-hop'],
                                                                  origin,
-                                                                 ' '.join(map(str,as_path)).replace('[','').replace(']',''),
+                                                                 ' '.join(map(str,as_path)).replace('[','').replace(']','').replace(',',''),
                                                                  med,
                                                                  atomic_aggregate)
                                     self.rib["input"].commit()

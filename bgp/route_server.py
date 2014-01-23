@@ -62,16 +62,16 @@ class route_server():
             # Trigger policy updates
             bgp_trigger_update(self.event_queue,self.ready_queue)
            
-            # Check for announced routes        
-            for update in updates:
-                if (update is None):
-                    continue
-                elif 'announce' in update:
-                    # TODO: need to correct this glue logic
-                    for VNH in self.sdx.VNH_2_pfx:
-                        if(update['announce']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
-                            self.server.sender_queue.put(announce_route(update['announce'],self.sdx.VNH_2_IP[VNH]))
-                            break
+            # Check for announced routes         
+            if (updates):
+                # TODO: need to correct this glue logic
+                for VNH in self.sdx.VNH_2_pfx:
+                    for prefix in list(self.sdx.VNH_2_pfx[VNH]):
+                        for paticipant_name in self.sdx.participants:
+                            route = self.sdx.participants[paticipant_name].rs_client.get_route('local',prefix)
+                            if route:
+                                self.server.sender_queue.put(announce_route(route,self.sdx.VNH_2_IP[VNH]))
+                                break
 
 ''' main '''    
 if __name__ == '__main__':
