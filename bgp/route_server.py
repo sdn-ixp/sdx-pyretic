@@ -42,28 +42,33 @@ class route_server():
             # At the moment, I am updating the RIB and will attach next-hop to the announcement at the end
                 
             updates = []
+            route_list = None
             
             # Update RIBs
             for participant_name in self.sdx.participants:
                 route_list = self.sdx.participants[participant_name].rs_client.update(route)
-                for route_item in route_list:
-                    updates.extend(decision_process(self.sdx.participants,route_item))
+                if route_list:
+                    break
+            
+            # Best Path Selection algorithm
+            for route_item in route_list:
+                updates.extend(decision_process(self.sdx.participants,route_item))
                     
             # Check for withdraw routes
-            for update in updates:
-                if (update is None):
+            for route in route_list:
+                if (route is None):
                     continue
-                elif 'withdraw' in update:
+                elif 'withdraw' in route:
                     for VNH in self.sdx.VNH_2_pfx:
-                        if(update['withdraw']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
-                            self.server.sender_queue.put(withdraw_route(update['withdraw'],self.sdx.VNH_2_IP[VNH]))
+                        if(route['withdraw']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
+                            self.server.sender_queue.put(withdraw_route(route['withdraw'],self.sdx.VNH_2_IP[VNH]))
                             break
            
             # Trigger policy updates
             bgp_trigger_update(self.event_queue,self.ready_queue)
            
             # Check for announced routes         
-            if (updates):
+            if (route_list):
                 # TODO: need to correct this glue logic
                 for VNH in self.sdx.VNH_2_pfx:
                     for prefix in list(self.sdx.VNH_2_pfx[VNH]):

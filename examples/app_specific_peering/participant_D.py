@@ -70,7 +70,15 @@ def policy(participant, sdx):
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
     prefixes_announced=bgp_get_announced_routes(sdx,'D')
     
+    #final_policy = ((match(dstport=80) >> sdx.fwd(participant.peers['B']))+
+    #                (match(dstport=22) >> sdx.fwd(participant.peers['C']))+
+    #                (match(dstport=1024) >> sdx.fwd(participant.peers['C']))+
+    #                (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
+    #               )
+    
     final_policy= (
+                   (match(dstport=4321) >> sdx.fwd(participant.peers['A'])) +
+                   (match(dstport=1234) >> sdx.fwd(participant.peers['B'])) +
                    (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
                 )
     
