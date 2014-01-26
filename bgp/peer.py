@@ -26,6 +26,9 @@ class peer():
             if ('ip' in route['neighbor']):
                 # Only add to the RIB if it's for myself.
                 if (route['neighbor']['ip'] in self.ips):
+                    if ('state' in route['neighbor'] and route['neighbor']['state']=='down'):
+                        self.rib["input"].delete_all()
+                        self.rib["input"].commit()
                     if ('update' in route['neighbor']):
                         if ('attribute' in route['neighbor']['update']):
                             attribute = route['neighbor']['update']['attribute']

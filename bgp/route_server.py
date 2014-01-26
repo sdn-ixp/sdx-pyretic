@@ -49,11 +49,11 @@ class route_server():
                 route_list = self.sdx.participants[participant_name].rs_client.update(route)
                 if route_list:
                     break
-            
+                
             # Best Path Selection algorithm
             for route_item in route_list:
                 updates.extend(decision_process(self.sdx.participants,route_item))
-                    
+            
             # Check for withdraw routes
             for route in route_list:
                 if (route is None):
@@ -63,13 +63,14 @@ class route_server():
                         if(route['withdraw']['prefix'] in list(self.sdx.VNH_2_pfx[VNH])):
                             self.server.sender_queue.put(withdraw_route(route['withdraw'],self.sdx.VNH_2_IP[VNH]))
                             break
-           
+            
             # Trigger policy updates
             bgp_trigger_update(self.event_queue,self.ready_queue)
            
             # Check for announced routes         
-            if (route_list):
-                # TODO: need to correct this glue logic
+            #if (route_list):
+            # TODO: need to correct this glue logic
+            if hasattr(self.sdx, 'VNH_2_pfx'):
                 for VNH in self.sdx.VNH_2_pfx:
                     for prefix in list(self.sdx.VNH_2_pfx[VNH]):
                         for paticipant_name in self.sdx.participants:
