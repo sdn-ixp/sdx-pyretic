@@ -27,8 +27,16 @@ class peer():
                 # Only add to the RIB if it's for myself.
                 if (route['neighbor']['ip'] in self.ips):
                     if ('state' in route['neighbor'] and route['neighbor']['state']=='down'):
+                        #FIXME: Glue logic
+                        routes = self.rib['input'].get_all()
+                        
+                        for route_item in routes:
+                            self.rib['local'].delete(route_item['prefix'])
+                        self.rib['local'].commit()
+                        
                         self.rib["input"].delete_all()
                         self.rib["input"].commit()
+                        
                     if ('update' in route['neighbor']):
                         if ('attribute' in route['neighbor']['update']):
                             attribute = route['neighbor']['update']['attribute']

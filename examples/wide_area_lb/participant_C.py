@@ -49,37 +49,27 @@ import os
 
 cwd = os.getcwd()
 
-
-# Need to improve this logic to make it more isolated
 def parse_config(config_file):
-    participants = json.load(open(config_file, 'r'))    
+    participants = json.load(open(config_file, 'r'))
+    
     for participant_name in participants:
         for i in range(len(participants[participant_name]["IPP"])):
             participants[participant_name]["IPP"][i] = IPPrefix(participants[participant_name]["IPP"][i])
-        for j in range(0,len(participants[participant_name]["Policy1"])):
-            participants[participant_name]["Policy1"][j]=IPPrefix(participants[participant_name]["Policy1"][j])
-                
-    #print participants
-    return participants 
-
+    
+    return participants
 
 def policy(participant, sdx):
     '''
         Specify participant policy
     '''
+    prefixes_announced=bgp_get_announced_routes(sdx,'C')
     #participants = parse_config(cwd + "/pyretic/sdx/examples/inbound_traffic_engineering_VNH/local.cfg")
-    prefixes_announced=bgp_get_announced_routes(sdx,'D')
-    
-    #final_policy = ((match(dstport=80) >> sdx.fwd(participant.peers['B']))+
-    #                (match(dstport=22) >> sdx.fwd(participant.peers['C']))+
-    #                (match(dstport=1024) >> sdx.fwd(participant.peers['C']))+
-    #                (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
-    #               )
     
     final_policy= (
-                   (match(dstport=80) >> sdx.fwd(participant.peers['A'])) +
-                   (match(dstport=25) >> sdx.fwd(participant.peers['B'])) +
                    (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
                 )
     
     return final_policy
+    
+    
+    
