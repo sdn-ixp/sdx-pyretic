@@ -77,8 +77,8 @@ def policy(participant, sdx):
     #               )
     
     final_policy= (
-                   (match(dstport=80) >> sdx.fwd(participant.peers['A'])) +
-                   ((match(dstport=25) + match(dstport=53)) >> sdx.fwd(participant.peers['B'])) +
+                   ((match(dstport=80) + match(dstport=25)) >> sdx.fwd(participant.peers['A'])) +
+                   #(match(dstport=25) >> sdx.fwd(participant.peers['B'])) +
                    (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
                 )
     
