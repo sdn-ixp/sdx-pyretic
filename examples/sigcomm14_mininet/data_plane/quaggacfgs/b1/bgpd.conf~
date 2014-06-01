@@ -1,0 +1,6 @@
+password sdxpass
+router bgp 200
+ bgp router-id 172.0.0.11
+ neighbor 172.0.255.254 remote-as 65000
+ neighbor 172.0.255.254 description Route-Server
+ neighbor 172.0.255.254 update-source 172.0.0.1
