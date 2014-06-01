@@ -5,7 +5,7 @@
 import sys
 from threading import Thread
 from multiprocessing.connection import Client
-sys.path.append(r'/home/sdx/pyretic/pyretic/sdx/bgp')
+sys.path.append(r'/home/mininet/pyretic/pyretic/sdx/bgp')
 
 '''Write output to stdout'''
 def _write(stdout,data):
@@ -58,7 +58,7 @@ def _receiver(conn,stdout,log):
 ''' main '''	
 if __name__ == '__main__':
 	
-	logfile = '/home/sdx/pyretic/pyretic/sdx/bgp/client.log'
+	logfile = '/home/mininet/pyretic/pyretic/sdx/bgp/client.log'
 	log = open(logfile, "w")
 		
 	conn = Client(('localhost', 6000), authkey='sdx')
