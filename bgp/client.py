@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 #  Author:
 #  Muhammad Shahbaz (muhammad.shahbaz@gatech.edu)
+#  Arpit Gupta
 
 import sys
 from threading import Thread
 from multiprocessing.connection import Client
-sys.path.append(r'/home/mininet/pyretic/pyretic/sdx/bgp')
+import os
+home_path = os.environ['HOME']
+logfile = home_path + '/pyretic/pyretic/sdx/bgp/client.log'
+sys.path.append(home_path + '/pyretic/pyretic/sdx/bgp')
 
 '''Write output to stdout'''
 def _write(stdout,data):
@@ -58,7 +62,6 @@ def _receiver(conn,stdout,log):
 ''' main '''	
 if __name__ == '__main__':
 	
-	logfile = '/home/mininet/pyretic/pyretic/sdx/bgp/client.log'
 	log = open(logfile, "w")
 		
 	conn = Client(('localhost', 6000), authkey='sdx')
