@@ -235,7 +235,7 @@ def sdx_participant_policies(sdx_config):
     sdx_policy = passthrough
     for k in [0,1]:
     #for k in sdx_config.participants:
-        print k
+        #print k
         sdx_policy = sequential([
                 sdx_policy,
                 parallel(
@@ -270,13 +270,16 @@ def sdx_parse_config(config_file):
     ''' 
         Create SDX environment ...
     '''
+    print "Creating SDX environment from the config files"
     for participant_name in sdx_config:
         
         ''' Adding physical ports '''
+        print "Adding Pysical ports for ", participant_name
         participant = sdx_config[participant_name]
         sdx_ports[participant_name] = [PhysicalPort(id_=participant["Ports"][i]['Id'],mac=MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
-        print sdx_ports[participant_name]
+        #print sdx_ports[participant_name]
         ''' Adding virtual port '''
+        print "Adding virtual ports for ", participant_name
         sdx_vports[participant_name] = VirtualPort(participant=participant_name) #Check if we need to add a MAC here
     
     sdx.sdx_ports=sdx_ports   
@@ -301,6 +304,7 @@ def sdx_parse_policies(policy_file,sdx):
     ''' 
         Get participants policies
     '''
+    print "Parsing participant's policies"
     for participant_name in sdx_policies:
         participant = sdx.participants[participant_name]
         policy_modules = [import_module(sdx_policies[participant_name][i]) 
@@ -309,15 +313,16 @@ def sdx_parse_policies(policy_file,sdx):
         participant.policies = parallel([
              policy_modules[i].policy(participant, sdx) 
              for i in range(0, len(sdx_policies[participant_name]))])  
-        print "Before pre",participant.policies
+        #print "Before pre",participant.policies
         # translate these policies for VNH Assignment
         participant.original_policies=participant.policies
         participant.policies=pre_VNH(participant.policies,sdx,participant_name,participant)
         
-        print "After pre: ",participant.policies
+        #print "After pre: ",participant.policies
     #print sdx.out_var_to_port[u'outB_1'].id_  
        
     # Virtual Next Hop Assignment
+    print "Starting VNH Assignment"
     vnh_assignment(sdx) 
     print "Completed VNH Assignment"
     # translate these policies post VNH Assignment
@@ -326,10 +331,10 @@ def sdx_parse_policies(policy_file,sdx):
     for participant_name in sdx.participants:
         sdx.participants[participant_name].policies=post_VNH(sdx.participants[participant_name].policies,
                                                          sdx,participant_name)        
-        print "After Post VNH: ",sdx.participants[participant_name].policies
+        #print "After Post VNH: ",sdx.participants[participant_name].policies
         start_comp=time.time()
         classifier.append(sdx.participants[participant_name].policies.compile())
-        print participant_name, time.time() - start_comp, "seconds"
+        #print participant_name, time.time() - start_comp, "seconds"
     
 def sdx_parse_announcements(announcement_file,sdx):
         

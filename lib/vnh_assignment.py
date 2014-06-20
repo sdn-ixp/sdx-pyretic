@@ -110,7 +110,7 @@ def get_prefix(policy, plist, pfxlist, part, sdx, acc=[]):
             if len(acc) == 0:
                 peer = get_fwdPeer(plist[part], policy.outport)
                 acc = bgp_get_announced_routes(sdx, peer)
-                print peer, acc
+                #print peer, acc
             pfxlist.append(acc)   
     return pfxlist, acc
 
@@ -154,7 +154,7 @@ def get_fwdMap(part_2_VNH):
                     for vnm in part_2_VNH[peer]:
                         if part_2_VNH[peer][vnm] == pfx and vnm != vname:
                             fwd_map[participant][peer][vname] = vnm
-    print "fwd_map: ", fwd_map
+    #print "fwd_map: ", fwd_map
     return fwd_map
 
 def get_peerName(port, p_list):
@@ -268,8 +268,8 @@ def step5b_expand_policy_with_vnhop(policy, participant_id, part_2_VNH, VNH_2_ma
             # print 'acc: ',acc
             # print 'policy: ',policy
             if len(list(acc)):
-                print 'a: ', acc
-            
+                #print 'a: ', acc
+            	xcl = 1 # TODO: clean this later
         return policy
 
 def step5b(policy, participant, part_2_VNH, VNH_2_mac, participant_list, sdx):
@@ -393,12 +393,12 @@ def vnh_assignment(sdx):
         sdx.part_2_prefix_old[participant] = tuple(participant_2_prefix[participant])
                         
     # Step 2 & 3
-    print 'Before Set operations: ', participant_2_prefix
+    #print 'Before Set operations: ', participant_2_prefix
     
     if (participant_2_prefix):
     
         part_2_prefix_updated, lcs = lcs_parallel(participant_2_prefix)
-        print 'After Set operations: ', part_2_prefix_updated, sdx.part_2_prefix_old
+        #print 'After Set operations: ', part_2_prefix_updated, sdx.part_2_prefix_old
         sdx.part_2_prefix_lcs = part_2_prefix_updated
         sdx.lcs_old = lcs
         
@@ -409,10 +409,11 @@ def vnh_assignment(sdx):
         VNH_2_pfx = {}
         step4(lcs,part_2_VNH,VNH_2_pfx,VNH_2_IP,VNH_2_MAC,part_2_prefix_updated)
         print "After new assignment"                    
-        print part_2_VNH
-        print VNH_2_pfx
-        print VNH_2_IP
-        print VNH_2_MAC
+        #print part_2_VNH
+        print "Virtual Next Hop --> IP Prefix: ", VNH_2_pfx
+        print "Virtual Next Hop --> Next Hop IP Address (Virtual): ", VNH_2_IP
+        print "Virtual Next Hop --> Next Hop Mac Address (Virtual)", VNH_2_MAC
+        
         sdx.VNH_2_pfx = VNH_2_pfx
         sdx.part_2_VNH=part_2_VNH
         sdx.VNH_2_IP=VNH_2_IP
@@ -466,7 +467,7 @@ def pre_VNH(policy, sdx, participant_name,participant):
                     
                 else:
                     pn = state.split('out' + participant_name + '_')[1]
-                    print "pn: ",pn
+                    #print "pn: ",pn
                     return fwd(participant.phys_ports[int(pn)].id_)
                     #return fwd(sdx.participant_2_port[participant_name][participant_name][int(pn)])
                                     
@@ -477,7 +478,7 @@ def post_VNH(policy, sdx, participant_name):
     port_2_state = {}
     port_2_mac={}
     fwdport=extract_all_forward_actions_from_policy(policy)
-    print participant_name,": ",fwdport
+    #print participant_name,": ",fwdport
     for port in fwdport:
         peer=sdx.port_2_participant[int(port)]
         peer=str(peer)

@@ -101,10 +101,13 @@ class sdx_policy(DynamicPolicy):
         
         ''' Get updated policy '''
         self.policy = sdx_platform(self.sdx)
-        
+        """ 
         print 'Final Policy'
         print self.policy
-        
+        compiled_policy = self.policy.compile()
+	print compiled_policy
+        """
+
         ''' Get updated IP to MAC list '''
         # TODO: Maybe we won't have to update it that often - MS
         #       Need efficient implementation of this ...
