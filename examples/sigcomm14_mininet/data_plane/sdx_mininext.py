@@ -13,7 +13,7 @@ from mininet.node import Node
 from mininet.link import Link
 from collections import namedtuple
 from mininet.node import RemoteController
-
+from mininet.term import makeTerm, cleanUpScreens
 QuaggaHost = namedtuple("QuaggaHost", "name ip mac port")
 net = None
 
@@ -114,14 +114,14 @@ def startNetwork():
 
     info( '** Starting the network\n' )
     net.start()
-
+    
     info( '** Dumping host connections\n' )
     dumpNodeConnections(net.hosts)
 
     info( '** psaux dumps on all hosts\n' )
     for lr in net.hosts:
         lr.cmdPrint("ps aux")
-    
+    #    lr.cmdPrint("xterm &")
     info( '** Dumping host connections\n' )
     dumpNodeConnections(net.hosts)
 
