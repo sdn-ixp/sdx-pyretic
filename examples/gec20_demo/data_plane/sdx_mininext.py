@@ -1,21 +1,33 @@
 #!/usr/bin/python
 
-"Create a network consisting of Quagga routers"
+# Author: Arpit Gupta (glex.qsd@gmail.com)
 
-import inspect, os, atexit
-from mininet.topo import Topo
-from mininet.net import Mininet
+"Create SDX topology with 3 Quagga edge routers"
+
+import inspect, os, sys, atexit
+# Import topo from Mininext
+from mininext.topo import Topo
+# Import quagga service from examples
+import service as QuaggaService
+# Other Mininext specific imports
+from mininext.net import MiniNExT as Mininext
+from mininext.cli import CLI
+import mininext.util
+# Imports from Mininet
+import mininet.util
+mininet.util.isShellBuiltin = mininext.util.isShellBuiltin
+sys.modules['mininet.util'] = mininet.util
+
 from mininet.util import dumpNodeConnections
-from mininet.log import setLogLevel, info
-from mininet.cli import CLI
-from mininet.service import QuaggaService
+from mininet.node import RemoteController
 from mininet.node import Node
 from mininet.link import Link
+from mininet.log import setLogLevel, info
 from collections import namedtuple
-from mininet.node import RemoteController
-from mininet.term import makeTerm, cleanUpScreens
+#from mininet.term import makeTerm, cleanUpScreens
 QuaggaHost = namedtuple("QuaggaHost", "name ip mac port")
 net = None
+
 
 class QuaggaTopo( Topo ):
     "Quagga topology example."
@@ -28,7 +40,7 @@ class QuaggaTopo( Topo ):
         "Directory where this file / script is located"
         scriptdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
         "Initialize a service helper for Quagga with default options"
-        quaggaSvc = QuaggaService()
+        quaggaSvc = QuaggaService.QuaggaService()
 
         "Path configurations for mounts"
         quaggaBaseConfigPath=scriptdir + '/quaggacfgs/'
@@ -109,7 +121,7 @@ def startNetwork():
     info( '** Creating Quagga network topology\n' )
     topo = QuaggaTopo()
     global net
-    net = Mininet(topo=topo, 
+    net = Mininext(topo=topo, 
 		controller=lambda name: RemoteController( name, ip='127.0.0.1' ),listenPort=6633)
 
     info( '** Starting the network\n' )
