@@ -47,13 +47,14 @@ class QuaggaTopo( Topo ):
 
         "List of Quagga host configs"
         quaggaHosts = []
-        quaggaHosts.append(QuaggaHost(name = 'a1', ip = '172.0.0.1/16', mac = '08:00:27:89:3b:9f', port = 2))
-        quaggaHosts.append(QuaggaHost(name = 'b1', ip = '172.0.0.11/16', mac ='08:00:27:92:18:1f', port = 3))
-        quaggaHosts.append(QuaggaHost(name = 'c1', ip = '172.0.0.21/16', mac = '08:00:27:54:56:ea', port = 4))
-        quaggaHosts.append(QuaggaHost(name = 'c2', ip = '172.0.0.22/16', mac = '08:00:27:bd:f8:b2', port = 5))
+        quaggaHosts.append(QuaggaHost(name = 'a1', ip = '172.0.0.1/16', mac = '08:00:27:89:3b:9f', port = 1))
+        quaggaHosts.append(QuaggaHost(name = 'b1', ip = '172.0.0.11/16', mac ='08:00:27:92:18:1f', port = 2))
+        quaggaHosts.append(QuaggaHost(name = 'c1', ip = '172.0.0.21/16', mac = '08:00:27:54:56:ea', port = 3))
+        quaggaHosts.append(QuaggaHost(name = 'c2', ip = '172.0.0.22/16', mac = '08:00:27:bd:f8:b2', port = 4))
 
         "Add switch for IXP fabric"
         ixpfabric = self.addSwitch( 's1' )
+
 
         "Setup each legacy router, add a link between it and the IXP fabric"
         for host in quaggaHosts:
@@ -75,29 +76,18 @@ class QuaggaTopo( Topo ):
                                             inPIDNamespace=True)
             "Attach the quaggaContainer to the IXP Fabric Switch"
             self.addLink( quaggaContainer, ixpfabric , port2=host.port)
-
-def connectToRootNS( network, switch, ip, routes ):
-    """Connect hosts to root namespace via switch. Starts network.
-      network: Mininet() network object
-      switch: switch to connect to root namespace
-      ip: IP address for root namespace node
-      routes: host networks to route to"""
-    # Create a node in root namespace and link to switch 0
-    root = Node( 'exabgp', inNamespace=False )
-    intf = Link( root, switch ).intf1
-    root.setIP( ip, intf=intf )
-    # Start network that now includes link to root namespace
-    network.start()
-    # Add routes from root ns to hosts
-    for route in routes:
-        root.cmd( 'route add -net ' + route + ' dev ' + str( intf ) )
-
+	
+	" Add root node for ExaBGP. ExaBGP acts as route server for SDX. "
+	root = self.addHost('exabgp', ip = '172.0.255.254/16', inNamespace = False)
+	self.addLink(root, ixpfabric, port2 = 5)
+        
 
 
 def addInterfacesForSDXNetwork( net ):
     hosts=net.hosts
     print "Configuring participating ASs\n\n"
     for host in hosts:
+	print "Host name: ", host.name
 	if host.name=='a1':
 		host.cmdPrint('sudo ifconfig lo:1 100.0.0.1 netmask 255.255.255.0 up')
 		host.cmdPrint('sudo ifconfig lo:2 100.0.0.2 netmask 255.255.255.0 up')
@@ -115,35 +105,33 @@ def addInterfacesForSDXNetwork( net ):
 		host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
 		host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
 		host.cmdPrint('sudo ifconfig -a')  
-
+	if host.name == "exabgp":
+		host.cmdPrint( 'route add -net 172.0.0.0/16 dev exabgp-eth0')
 
 def startNetwork():
     info( '** Creating Quagga network topology\n' )
     topo = QuaggaTopo()
     global net
     net = Mininext(topo=topo, 
-		controller=lambda name: RemoteController( name, ip='127.0.0.1' ),listenPort=6633)
-
+		controller=lambda name: RemoteController( name, ip='127.0.0.1' ),listenPort=6633,autoStaticArp=True)
+    
     info( '** Starting the network\n' )
     net.start()
     
-    info( '** Dumping host connections\n' )
-    dumpNodeConnections(net.hosts)
+    #info( '** Dumping host connections\n' )
+    #dumpNodeConnections(net.hosts)
 
     info( '** psaux dumps on all hosts\n' )
     for lr in net.hosts:
-        lr.cmdPrint("ps aux")
-    #    lr.cmdPrint("xterm &")
-    info( '** Dumping host connections\n' )
-    dumpNodeConnections(net.hosts)
+        if lr.name != 'exabgp':
+	    lr.cmdPrint("ps aux")
+    
+    #info( '** Dumping host connections\n' )
+    #dumpNodeConnections(net.hosts)
 
     info( '**Adding Network Interfaces for SDX Setup\n' )    
     addInterfacesForSDXNetwork(net)
     
-    switch = net.switches[ 0 ]
-    info( '** Adding SDX Controller ') 
-    connectToRootNS( net, switch,'172.0.255.254/16', [ '172.0.0.0/16' ] )
- 
     info( '** Running CLI\n' )
     CLI( net )
 
