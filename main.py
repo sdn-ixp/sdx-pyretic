@@ -9,8 +9,8 @@
 #        Software Defined Exchange (SDX)
 #
 #  Author:
-#        Muhammad Shahbaz
 #        Arpit Gupta (glex.qsd@gmail.com)
+#        Muhammad Shahbaz
 #        Laurent Vanbever
 #
 #  Copyright notice:
@@ -96,21 +96,16 @@ class sdx_policy(DynamicPolicy):
         
     def update_policy(self):
         
-        # TODO: why are we running sdx_parse_polcieis for every update_policy (this is a serious bottleneck in policy compilation time) - MS
-        sdx_parse_policies(cwd+'/pyretic/sdx/sdx_policies.cfg',self.sdx)
+        # TODO: Optimize policy update taking into consideration only the delta changes in the policies
+        # This checks for two things: 
+	# (1) Participant's policy has changed, 
+	# (2) BGP Updates changed the existing VNH to IP Prefix mapping 
+	sdx_parse_policies(cwd+'/pyretic/sdx/sdx_policies.cfg',self.sdx)
         
         ''' Get updated policy '''
         self.policy = sdx_platform(self.sdx)
-        """ 
-        print 'Final Policy'
-        print self.policy
-        compiled_policy = self.policy.compile()
-	print compiled_policy
-        """
 
         ''' Get updated IP to MAC list '''
-        # TODO: Maybe we won't have to update it that often - MS
-        #       Need efficient implementation of this ...
         self.arp_policy.mac_of = get_ip_mac_list(self.sdx.VNH_2_IP,self.sdx.VNH_2_MAC)
     
 '''' Dynamic update policy handler '''
