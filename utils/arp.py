@@ -43,7 +43,7 @@ from pyretic.lib.query import *
 
 from pyretic.modules.mac_learner import mac_learner
 
-VERBOSE_LEVEL = 1
+VERBOSE_LEVEL = 0
 ARP = match(ethtype=ARP_TYPE)
 REQUEST=1
 RESPONSE=2
@@ -113,13 +113,13 @@ class arp(DynamicPolicy):
         if opcode == 1:
             if dstip in self.mac_of:
                 if VERBOSE_LEVEL > 0:
-                    print "RECEIVED REQUEST FOR %s FROM %s, KNOWN HOST" % (dstip,srcip)
+                    print "RECEIVED REQUEST FOR %s FROM %s, KNOWN HOST" % (dstip,srcip), inport
                     if VERBOSE_LEVEL > 1:
                         print pkt
                 send_arp(RESPONSE,self.network,switch,inport,dstip,self.mac_of[dstip],srcip,srcmac)
             else:
                 if VERBOSE_LEVEL > 0:
-                    print "RECEIVED REQUEST FOR %s FROM %s, UNKNOWN HOST" % (dstip,srcip)
+                    print "RECEIVED REQUEST FOR %s FROM %s, UNKNOWN HOST" % (dstip,srcip), inport
                     if VERBOSE_LEVEL > 1:
                         print pkt
 
