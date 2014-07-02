@@ -1,20 +1,15 @@
-SDX Platform
+# SDX Platform
 ============
 
-Using the SDX Platform
+## Using the SDX Platform
 --------------------
 
-Prerequisites:
+### Prerequisites:
 
-- Pyretic <https://github.com/frenetic-lang/pyretic>
-- The following Python libraries:
-  - ipaddr
+* Pyretic <https://github.com/frenetic-lang/pyretic>
+* The following Python libraries:
+  * ipaddr
 
-Installation:
+### Installation:
 
-- Clone the sdx-platform repository inside the pyretic repository directory (e.g., as sdx)
-- From the root directory of the pyretic repository, run
-
-  ```
-python pyretic.py pyretic.sdx.main
-  ```
+* Follow the installation instructions provided [here] (https://github.com/sdn-ixp/sdx-platform/wiki/Installation-Instructions)
