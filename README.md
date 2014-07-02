@@ -1,8 +1,6 @@
 # SDX Platform
-============
 
 ## Using the SDX Platform
---------------------
 
 ### Prerequisites:
 
