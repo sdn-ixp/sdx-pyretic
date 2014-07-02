@@ -2,7 +2,7 @@
 
 # Author: Arpit Gupta (glex.qsd@gmail.com)
 
-"Create SDX topology with 3 Quagga edge routers"
+"Create SDX topology with 4 Quagga edge routers"
 
 import inspect, os, sys, atexit
 # Import topo from Mininext
