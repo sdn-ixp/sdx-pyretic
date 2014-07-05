@@ -8,7 +8,7 @@ import inspect, os, sys, atexit
 # Import topo from Mininext
 from mininext.topo import Topo
 # Import quagga service from examples
-import service as QuaggaService
+from mininext.services.quagga import QuaggaService
 # Other Mininext specific imports
 from mininext.net import MiniNExT as Mininext
 from mininext.cli import CLI
@@ -40,7 +40,7 @@ class QuaggaTopo( Topo ):
         "Directory where this file / script is located"
         scriptdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # script directory
         "Initialize a service helper for Quagga with default options"
-        quaggaSvc = QuaggaService.QuaggaService()
+        quaggaSvc = QuaggaService(autoStop=False)
 
         "Path configurations for mounts"
         quaggaBaseConfigPath=scriptdir + '/quaggacfgs/'
@@ -62,19 +62,16 @@ class QuaggaTopo( Topo ):
             quaggaSvcConfig = \
             { 'quaggaConfigPath' : scriptdir + '/quaggacfgs/' + host.name }
 
-            "Add services to the list for handling by service helper"
-            services = {}
-            services[quaggaSvc] = quaggaSvcConfig
-            "Create an instance of a host, called a quaggaContainer"
             quaggaContainer = self.addHost( name=host.name,
                                             ip=host.ip,
 					    mac=host.mac,
-                                            services=services,
                                             privateLogDir=True,
                                             privateRunDir=True,
                                             inMountNamespace=True,
                                             inPIDNamespace=True)
-            "Attach the quaggaContainer to the IXP Fabric Switch"
+            self.addNodeService(node=host.name, service=quaggaSvc,
+                                nodeConfig=quaggaSvcConfig)
+	    "Attach the quaggaContainer to the IXP Fabric Switch"
             self.addLink( quaggaContainer, ixpfabric , port2=host.port)
 	
 	" Add root node for ExaBGP. ExaBGP acts as route server for SDX. "
