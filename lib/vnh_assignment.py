@@ -95,8 +95,8 @@ def get_prefix(policy, plist, pfxlist, part, sdx, acc=[]):
         for pol in policy.policies:
             pfxlist, acc = get_prefix(pol, plist, pfxlist, part, sdx, acc) 
     elif isinstance(policy, if_):
-        for pol in policy.policies:
-            pfxlist, acc = get_prefix(pol, plist, pfxlist, part, sdx)  
+        raise NotImplementedError("Compilation of if_ policy is currently not supported")
+        sys.exit(-1)
     else:
         if isinstance(policy, match):
             # print policy
