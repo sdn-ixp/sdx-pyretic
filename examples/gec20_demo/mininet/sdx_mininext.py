@@ -113,7 +113,7 @@ def startNetwork():
     topo = QuaggaTopo()
     global net
     net = Mininext(topo=topo, 
-		controller=lambda name: RemoteController( name, ip='127.0.0.1' ),listenPort=6633,autoStaticArp=True)
+		controller=lambda name: RemoteController( name, ip='127.0.0.1' ),listenPort=6633)
     
     info( '** Starting the network\n' )
     net.start()
