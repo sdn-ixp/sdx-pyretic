@@ -86,24 +86,20 @@ def addInterfacesForSDXNetwork( net ):
     for host in hosts:
 	print "Host name: ", host.name
 	if host.name=='a1':
-		host.cmdPrint('sudo ifconfig lo:1 100.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:2 100.0.0.2 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:110 110.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
+		host.cmd('sudo ifconfig lo:1 100.0.0.1 netmask 255.255.255.0 up')
+		host.cmd('sudo ifconfig lo:2 100.0.0.2 netmask 255.255.255.0 up')
+		host.cmd('sudo ifconfig lo:110 110.0.0.1 netmask 255.255.255.0 up')
 	if host.name=='b1':
-		host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
+		host.cmd('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
+		host.cmd('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
 	if host.name=='c1':
-		host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
+		host.cmd('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
+		host.cmd('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
 	if host.name=='c2':
-		host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
+		host.cmd('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
+		host.cmd('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
 	if host.name == "exabgp":
-		host.cmdPrint( 'route add -net 172.0.0.0/16 dev exabgp-eth0')
+		host.cmd( 'route add -net 172.0.0.0/16 dev exabgp-eth0')
 
 def startNetwork():
     info( '** Creating Quagga network topology\n' )
@@ -115,17 +111,11 @@ def startNetwork():
     info( '** Starting the network\n' )
     net.start()
     
-    #info( '** Dumping host connections\n' )
-    #dumpNodeConnections(net.hosts)
-
     info( '** psaux dumps on all hosts\n' )
     for lr in net.hosts:
         if lr.name != 'exabgp':
 	    lr.cmdPrint("ps aux")
     
-    #info( '** Dumping host connections\n' )
-    #dumpNodeConnections(net.hosts)
-
     info( '**Adding Network Interfaces for SDX Setup\n' )    
     addInterfacesForSDXNetwork(net)
     
