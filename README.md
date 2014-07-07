@@ -5,9 +5,11 @@
 ### Prerequisites:
 
 * Pyretic <https://github.com/frenetic-lang/pyretic>
-* The following Python libraries:
-  * ipaddr
+* Quagga
+* Mininext
 
 ### Installation:
 
-* Follow the installation instructions provided [here] (https://github.com/sdn-ixp/sdx-platform/wiki/Installation-Instructions)
+The current instructions for installing and running SDX are in an assignment for the Coursera SDN class.  Please find those instructions [here](http://goo.gl/oIqVTA).
+
+We will migrate these instructions back to this page shortly.
