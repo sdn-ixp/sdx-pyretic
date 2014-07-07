@@ -1,6 +1,6 @@
-# SDX: A Software Defined Internet Exchange
+## SDX: A Software Defined IXP
 
-## Using SDX
+### Using SDX
 
 ### Installation
 
@@ -8,11 +8,11 @@ The current instructions for installing and running SDX are in an assignment for
 
 We will migrate these instructions back to this page shortly.
 
-### Dependencies:
+### Dependencies
 
-* Pyretic <https://github.com/frenetic-lang/pyretic>
-* Quagga
+* [Pyretic](https://github.com/frenetic-lang/pyretic)
 * Mininext
+* Quagga
 
 ### More Information
 
