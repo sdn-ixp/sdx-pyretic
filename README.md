@@ -1,13 +1,19 @@
-# SDX Platform
+## SDX: A Software Defined IXP
 
-## Using the SDX Platform
+### Using SDX
 
-### Prerequisites:
+### Installation
 
-* Pyretic <https://github.com/frenetic-lang/pyretic>
-* The following Python libraries:
-  * ipaddr
+The current instructions for installing and running SDX are in an assignment for the Coursera SDN class.  Please find those instructions [here](http://goo.gl/oIqVTA).
 
-### Installation:
+We will migrate these instructions back to this page shortly.
 
-* Follow the installation instructions provided [here] (https://github.com/sdn-ixp/sdx-platform/wiki/Installation-Instructions)
+### Dependencies
+
+* [Pyretic](https://github.com/frenetic-lang/pyretic)
+* Mininext
+* Quagga
+
+### More Information
+
+You can read about the SDX in our [SIGCOMM 2014 paper](http://gtnoise.net/papers/2014/gupta-sigcomm2014.pdf).
