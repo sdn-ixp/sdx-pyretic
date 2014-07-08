@@ -89,30 +89,30 @@ def get_fwdPeer(peers, ind):
 def get_prefix(policy, plist, pfxlist, part, sdx, acc=[]):
     if isinstance(policy, parallel):
         for pol in policy.policies:
-            pfxlist, acc = get_prefix(pol, plist, pfxlist, part, sdx)
+            policy = get_prefix(pol, plist, pfxlist, part, sdx)
     elif isinstance(policy, sequential):
         acc = []
         for pol in policy.policies:
-            pfxlist, acc = get_prefix(pol, plist, pfxlist, part, sdx, acc) 
+            policy = get_prefix(pol, plist, pfxlist, part, sdx, acc) 
     elif isinstance(policy, if_):
-        raise NotImplementedError("Compilation of if_ policy is currently not supported")
-        sys.exit(-1)
+        policy = if_(get_prefix(policy.pred, plist, pfxlist, part, sdx, acc),
+                           get_prefix(policy.t_branch, plist, pfxlist, part, sdx, acc),
+                           get_prefix(policy.f_branch, plist, pfxlist, part, sdx, acc))
+        #raise NotImplementedError("Compilation of if_ policy is currently not supported")
+        #sys.exit(-1)
     else:
         if isinstance(policy, match):
             # print policy
             if 'dstip' in policy.map:
                 acc = list(policy.map['dstip'])
         elif isinstance(policy, match_prefixes_set):
-            # print policy
-            # if 'dstip' in policy.map:
             acc = list(policy.pfxes)
         elif isinstance(policy, fwd):
             if len(acc) == 0:
                 peer = get_fwdPeer(plist[part], policy.outport)
                 acc = bgp_get_announced_routes(sdx, peer)
-                #print peer, acc
             pfxlist.append(acc)   
-    return pfxlist, acc
+    return policy
 
 
 def get_part2prefixes(sdx):
@@ -123,7 +123,7 @@ def get_part2prefixes(sdx):
         pfxlist = []
         final_pfxlist = []
         acc = []
-        pfxlist, acc = get_prefix(policy, plist, pfxlist, participant, sdx)
+        get_prefix(policy, plist, pfxlist, participant, sdx)
         
         for pfx_item in pfxlist:
             if (pfx_item):
@@ -259,17 +259,12 @@ def step5b_expand_policy_with_vnhop(policy, participant_id, sdx, acc=[]):
             else: 
                 # TODO: adding temporary glue logic 
                 match_vnhops = match(dstmac=sdx.VNH_2_MAC['VNH'])
-                
-            # print match_vnhops           
-            # print 'acc1: ',acc
-            # print policy           
+                          
             return match_vnhops
         
         elif isinstance(policy, fwd):
-            # print 'acc: ',acc
-            # print 'policy: ',policy
+
             if len(list(acc)):
-                #print 'a: ', acc
             	xcl = 1 # TODO: clean this later
         return policy
 
@@ -286,7 +281,6 @@ def step5b(policy, participant, sdx):
         return expanded_vnhop_policy
     
 def extract_all_matches_from_policy(policy, acc=[]):
-    # Recursive call
     if isinstance(policy, parallel):
         p = extract_all_matches_from_policy(policy.policies[0])
         for sub_policy in policy.policies[1:]:
@@ -302,10 +296,9 @@ def extract_all_matches_from_policy(policy, acc=[]):
                 p = p & extract_all_matches_from_policy(sub_policy)
         return p
     elif isinstance(policy, if_):
-        raise NotImplementedError("Compilation of if_ policy is currently not supported")
-        sys.exit(-1)
+        # TODO: Need more testing for this logic -- AG
+        return policy.pred
     else:
-        # Base call
         if isinstance(policy, match):
             return policy
         else:

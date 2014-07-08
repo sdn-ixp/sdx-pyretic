@@ -105,7 +105,7 @@ class SDX(object):
         
         self.VNH_2_pfx = {}
         self.VNH_2_IP=VNH_2_IP
-        self.VNH_2_MAC=VNH_2_MAC
+        self.VNH_2_MAC = VNH_2_MAC
         self.part_2_VNH={}
         
         #self.prefixes=prefixes
