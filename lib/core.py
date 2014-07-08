@@ -92,16 +92,8 @@ class SDX(object):
         self.out_var_to_port = {}
         self.port_id_to_out_var = {}
         
-        #self.policy_2_prefix={}
-        #self.prefix_2_policy={}
-        #self.prefix_2_participant=prefix_2_participant # This will be later updated from the BGP RIB table
-        #self.policy_2_VNH={}
-        
         self.participant_2_port=participant_2_port
         
-        #self.prefixes_announced=prefixes_announced
-        #self.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received
-        #self.peer_groups=peer_groups
         
         self.VNH_2_pfx = {}
         self.VNH_2_IP=VNH_2_IP
