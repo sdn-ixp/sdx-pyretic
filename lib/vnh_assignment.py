@@ -231,23 +231,23 @@ def extract_all_forward_actions_from_policy(policy, acc=[]):
         else:
             return set()
     
-def step5b_expand_policy_with_vnhop(policy, participant_id, part_2_VNH, VNH_2_mac, acc=[]):
+def step5b_expand_policy_with_vnhop(policy, participant_id, sdx, acc=[]):
     # Recursive call
     if isinstance(policy, parallel):
-        return parallel(map(lambda p: step5b_expand_policy_with_vnhop(p, participant_id, part_2_VNH, VNH_2_mac), policy.policies))
+        return parallel(map(lambda p: step5b_expand_policy_with_vnhop(p, participant_id, sdx), policy.policies))
     elif isinstance(policy, sequential):
         acc = []
-        return sequential(map(lambda p: step5b_expand_policy_with_vnhop(p, participant_id, part_2_VNH, VNH_2_mac, acc), policy.policies))
+        return sequential(map(lambda p: step5b_expand_policy_with_vnhop(p, participant_id, sdx, acc), policy.policies))
     elif isinstance(policy, if_):
-        return if_(step5b_expand_policy_with_vnhop(policy.pred, participant_id, part_2_VNH, VNH_2_mac),
-                   step5b_expand_policy_with_vnhop(policy.t_branch, participant_id, part_2_VNH, VNH_2_mac),
-                   step5b_expand_policy_with_vnhop(policy.f_branch, participant_id, part_2_VNH, VNH_2_mac))
+        return if_(step5b_expand_policy_with_vnhop(policy.pred, participant_id, sdx),
+                   step5b_expand_policy_with_vnhop(policy.t_branch, participant_id, sdx),
+                   step5b_expand_policy_with_vnhop(policy.f_branch, participant_id, sdx))
     else:
         # Base call
         if isinstance(policy, match_prefixes_set):            
             unique_vnhops = set()
             for pfx in policy.pfxes:
-                vnhop = return_vnhop(part_2_VNH[participant_id], VNH_2_mac, pfx)
+                vnhop = return_vnhop(sdx.part_2_VNH[participant_id], sdx.VNH_2_MAC, pfx)
                 unique_vnhops.add(vnhop)
             # print unique_vnhops
             acc = list(unique_vnhops)
@@ -258,7 +258,7 @@ def step5b_expand_policy_with_vnhop(policy, participant_id, part_2_VNH, VNH_2_ma
                     match_vnhops = match_vnhops + match(dstmac=vnhop)
             else: 
                 # TODO: adding temporary glue logic 
-                match_vnhops = match(dstmac=VNH_2_mac['VNH'])
+                match_vnhops = match(dstmac=sdx.VNH_2_MAC['VNH'])
                 
             # print match_vnhops           
             # print 'acc1: ',acc
@@ -273,13 +273,13 @@ def step5b_expand_policy_with_vnhop(policy, participant_id, part_2_VNH, VNH_2_ma
             	xcl = 1 # TODO: clean this later
         return policy
 
-def step5b(policy, participant, part_2_VNH, VNH_2_mac, participant_list, sdx):
-    expanded_vnhop_policy = step5b_expand_policy_with_vnhop(policy, participant, part_2_VNH, VNH_2_mac)
+def step5b(policy, participant, sdx):
+    expanded_vnhop_policy = step5b_expand_policy_with_vnhop(policy, participant, sdx)
     
     policy_matches = extract_all_matches_from_policy(expanded_vnhop_policy)
     if participant in sdx.participants and policy_matches is not None:
         # print 'BIG Match: ',policy_matches
-        bgp = step5b_expand_policy_with_vnhop(get_default_forwarding_policy(bgp_get_best_routes(sdx,participant), participant, participant_list), participant, part_2_VNH, VNH_2_mac)
+        bgp = step5b_expand_policy_with_vnhop(get_default_forwarding_policy(bgp_get_best_routes(sdx,participant), participant, sdx.participant_2_port), participant, sdx)
         # print bgp
         return if_(policy_matches, expanded_vnhop_policy, bgp)
     else:
@@ -362,23 +362,15 @@ def step5a(policy, participant, sdx, include_default_policy=False):
 
 
 def vnh_assignment(sdx):
-    # Initialize the required data structures
-    VNH_2_IP = sdx.VNH_2_IP    
-    VNH_2_MAC = sdx.VNH_2_MAC
-    participant_2_port = sdx.participant_2_port
-    
-    # Step 1:
-    #----------------------------------------------------------------------------------------------------#
-    # 1. Get the best paths data structure
-    # 2. Get the participant_2_prefix data structure from participant's policies
-
-    # TODO: clean the memory wastage in the current implementation (alot of unnecessary copies floating around) - MS
-
-    # get the participant_2_prefix structure
-    # without taking default forwarding policies into consideration
+    """
+    Step 1:
+    ----------------------------------------------------------------------------------------------------#
+     1. Get the best paths data structure
+     2. Get the participant_2_prefix data structure from participant's policies
+    """
     participant_2_prefix = get_part2prefixes(sdx)
     
-    # Add the prefixes for default forwarding policies now
+    "Add the prefixes for default forwarding policies now"
     for participant in sdx.participants:
         best_routes_list = [x for x in bgp_get_best_routes(sdx,participant).values() if x]
             
@@ -389,12 +381,11 @@ def vnh_assignment(sdx):
                 participant_2_prefix[participant] = best_routes_list
     #----------------------------------------------------------------------------------------------------#
     
-    # # Update the sdx part_2_prefix_old data structure, it will be used in VNH recompute
+    "Update the sdx part_2_prefix_old data structure, it will be used in VNH recompute"
     for participant in participant_2_prefix:
         sdx.part_2_prefix_old[participant] = tuple(participant_2_prefix[participant])
                         
-    # Step 2 & 3
-    #print 'Before Set operations: ', participant_2_prefix
+    # Step 2/3
     
     if (participant_2_prefix):
     
@@ -411,11 +402,9 @@ def vnh_assignment(sdx):
         print "Virtual Next Hop --> IP Prefix: ", sdx.VNH_2_pfx
         print "Virtual Next Hop --> Next Hop IP Address (Virtual): ", sdx.VNH_2_IP
         print "Virtual Next Hop --> Next Hop Mac Address (Virtual)", sdx.VNH_2_MAC
- 
     
         #----------------------------------------------------------------------------------------------------#
-    
-        # TODO: create proper corner case logic - MS
+
         if (sdx.part_2_VNH):
             # Step 5
             # Step 5a: Get expanded policies
@@ -427,7 +416,7 @@ def vnh_assignment(sdx):
                 X_a = step5a(X_policy, participant, sdx)
                 #print "Policy after 5a:\n\n", X_a
         
-                X_b = step5b(X_a, participant, sdx.part_2_VNH, sdx.VNH_2_MAC, participant_2_port, sdx)
+                X_b = step5b(X_a, participant, sdx)
                 #print "Policy after Step 5b:", X_b
 
                 sdx.participants[participant].policies = X_b
@@ -435,6 +424,7 @@ def vnh_assignment(sdx):
         for participant in sdx.participants:
             #print "PARTICIPANT: ",participant
             sdx.participants[participant].policies = drop   
+
 
 def pre_VNH(policy, sdx, participant_name,participant):
     if isinstance(policy, parallel):
