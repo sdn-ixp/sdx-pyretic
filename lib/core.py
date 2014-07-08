@@ -9,9 +9,9 @@
 #        Software Defined Exchange (SDX)
 #
 #  Author:
+#        Arpit Gupta
 #        Laurent Vanbever
 #        Muhammad Shahbaz
-#        Arpit Gupta
 #
 #  Copyright notice:
 #        Copyright (C) 2012, 2013 Georgia Institute of Technology
@@ -79,30 +79,6 @@ VNH_2_MAC= {
             'VNH':'aa:00:00:00:00:00'
            }
 
-#peer_groups={'pg1':[1,2,3,4]}
-
-#prefixes_announced={'pg1':{
-#                               'A':['10.0.0.0/24'],
-#                               'B':['11.0.0.0/24','12.0.0.0/24','13.0.0.0/24','14.0.0.0/24','16.0.0.0/24'],
-#                               'C':['13.0.0.0/24','14.0.0.0/24','15.0.0.0/24','16.0.0.0/24'],
-#                               'D':['11.0.0.0/24','12.0.0.0/24','13.0.0.0/24','14.0.0.0/24','15.0.0.0/24','16.0.0.0/24'],
-#                               }
-#                        }
-
-# Set of prefixes for A's best paths
-# We will get this data structure from RIB
-#participant_to_ebgp_nh_received = {
-#        'A' : {'11.0.0.0/24':'D','12.0.0.0/24':'D','13.0.0.0/24':'D','14.0.0.0/24':'C','15.0.0.0/24':'C','16.0.0.0/24':'C'}
-#    }
-    
-#prefixes={'p1':IPv4Network('11.0.0.0/24'),
-#          'p2':IPv4Network('12.0.0.0/24'),
-#          'p3':IPv4Network('13.0.0.0/24'),
-#          'p4':IPv4Network('14.0.0.0/24'),
-#          'p5':IPv4Network('15.0.0.0/24'),
-#          'p6':IPv4Network('16.0.0.0/24')
-#              }
-
 
 class SDX(object):
     """Represent a SDX platform configuration"""
@@ -127,7 +103,7 @@ class SDX(object):
         #self.participant_to_ebgp_nh_received=participant_to_ebgp_nh_received
         #self.peer_groups=peer_groups
         
-        VNH_2_pfx = None
+        self.VNH_2_pfx = {}
         self.VNH_2_IP=VNH_2_IP
         self.VNH_2_MAC=VNH_2_MAC
         self.part_2_VNH={}
