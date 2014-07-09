@@ -7,4 +7,4 @@ from pyretic.lib.std import *
 
 ''' BGP filter policy '''
 BGP_PORT = 179
-BGP = match(srcport=BGP_PORT)|match(dstport=BGP_PORT)
+BGP = match(srcport=BGP_PORT) | match(dstport=BGP_PORT)
