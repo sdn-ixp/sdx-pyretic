@@ -67,7 +67,7 @@ def getPrefixes(pfile,VNH_2_IP,prefixes_announced,prefixes):
             temp=line.split(' ')
             neighbor=temp[0]
             prefix=temp[1].split('\n')[0]
-	    if prefix not in plist:
+            if prefix not in plist:
                 plist.append(prefix)
                 prefixes['p'+str(i)]=IPv4Network(prefix)
                 i+=1
