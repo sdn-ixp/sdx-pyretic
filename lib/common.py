@@ -57,8 +57,9 @@ class PhysicalPort(Port):
 
 class VirtualPort(Port):
     """Abstract class that represents a virtual port"""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, id_, *args, **kwargs):
         super(VirtualPort, self).__init__(*args, **kwargs)
+        self.id_ = id_
 
 class SDXParticipant(object):
     """Represent a particular SDX participant"""

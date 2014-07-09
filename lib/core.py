@@ -49,29 +49,9 @@ from pyretic.sdx.lib.common import *
 from pyretic.sdx.lib.bgp_interface import *
 from pyretic.sdx.lib.set_operations import *
 from pyretic.sdx.lib.language import *
-#from pyretic.sdx.lib.policy_converter import *
 from pyretic.sdx.lib.vnh_assignment import *
 
-###
-### SDX classes
-###
-# TODO: These should be automatically generated using the sdx_config.cfg file
-
-participant_2_port={'A':{'A':[1],'B':[2],'C':[3],'D':[6]},
-                    'B':{'A':[1],'B':[2],'C':[3],'D':[6]},
-                    'C':{'A':[1],'B':[2],'C':[3,4],'D':[6]},
-                    'D':{'A':[1],'B':[2],'C':[3],'D':[6]}
-                   }
-
-port_2_participant = {
-        1  : 'A',
-        2  : 'B',
-        3  : 'C',
-        4  : 'C',
-        6  : 'D'
-    }
-
-# TODO: these should be added in the config file too and auto-generated
+# TODO: these should be added in the config file --AG
 VNH_2_IP = {
             'VNH':list(IPNetwork('172.0.1.1/28'))
            }
@@ -92,7 +72,7 @@ class SDX(object):
         self.out_var_to_port = {}
         self.port_id_to_out_var = {}
         
-        self.participant_2_port=participant_2_port
+        self.participant_2_port={}
         
         
         self.VNH_2_pfx = {}
@@ -102,7 +82,7 @@ class SDX(object):
         
         #self.prefixes=prefixes
         
-        self.port_2_participant=port_2_participant
+        self.port_2_participant={}
         self.part_2_prefix_old={}
         self.part_2_prefix_lcs={}
         self.lcs_old=[]
@@ -235,6 +215,7 @@ def sdx_parse_config(config_file):
     sdx_ports = {}
     sdx_vports = {}
     
+    
     ''' 
         Create SDX environment ...
     '''
@@ -244,11 +225,18 @@ def sdx_parse_config(config_file):
         ''' Adding physical ports '''
         print "Adding Physical ports for ", participant_name
         participant = sdx_config[participant_name]
-        sdx_ports[participant_name] = [PhysicalPort(id_=participant["Ports"][i]['Id'],mac=MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
+        sdx_ports[participant_name] = [PhysicalPort(id_=participant["Ports"][i]['Id'],
+                                       mac=MAC(participant["Ports"][i]["MAC"]),
+                                       ip=IP(participant["Ports"][i]["IP"])) 
+                                       for i in range(0, len(participant["Ports"]))]     
+        sdx.participant_2_port[participant_name] = {participant_name:[]}
+        for i in range(0, len(participant["Ports"])):
+            sdx.port_2_participant[participant["Ports"][i]['Id']] = participant_name  
+            sdx.participant_2_port[participant_name][participant_name].append(participant["Ports"][i]['Id'])
         #print sdx_ports[participant_name]
         ''' Adding virtual port '''
         print "Adding virtual ports for ", participant_name
-        sdx_vports[participant_name] = VirtualPort(participant=participant_name) #Check if we need to add a MAC here
+        sdx_vports[participant_name] = VirtualPort(participant=participant_name, id_ = participant["Ports"][0]['Id']) #Check if we need to add a MAC here
     
     sdx.sdx_ports=sdx_ports   
     for participant_name in sdx_config:
@@ -257,9 +245,12 @@ def sdx_parse_config(config_file):
         ''' Assign peers to each participant '''
         for peer_name in sdx_config[participant_name]["Peers"]:
             peers[peer_name] = sdx_vports[peer_name]
+            sdx.participant_2_port[participant_name][peer_name] = [sdx_vports[peer_name].id_]
+        print sdx.participant_2_port
             
         ''' Creating a participant object '''
-        sdx_participant = SDXParticipant(id_=participant_name,vport=sdx_vports[participant_name],phys_ports=sdx_ports[participant_name],peers=peers)
+        sdx_participant = SDXParticipant(id_=participant_name,vport=sdx_vports[participant_name],
+                                         phys_ports=sdx_ports[participant_name],peers=peers)
         
         ''' Adding the participant in the SDX '''
         sdx.add_participant(sdx_participant,participant_name)
