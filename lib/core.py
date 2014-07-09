@@ -174,8 +174,11 @@ def sdx_preprocessing(sdx_config):
     preprocessing_policies = []
     for participant in sdx_config.participants:
         for port in sdx_config.participants[participant].phys_ports:
-            preprocessing_policies.append((match(inport=port.id_) >>
-                                           modify(state=sdx_config.participant_id_to_in_var[sdx_config.participants[participant].id_])))
+            preprocessing_policies.append(
+                (match(
+                    inport=port.id_) >> modify(
+                    state=sdx_config.participant_id_to_in_var[
+                        sdx_config.participants[participant].id_])))
     return parallel(preprocessing_policies)
 
 
@@ -186,8 +189,11 @@ def sdx_postprocessing(sdx_config):
     '''
     postprocessing_policies = []
     for output_var in sdx_config.out_var_to_port:
-        postprocessing_policies.append((match(state=output_var) >> modify(state=None) >>
-                                        fwd(sdx_config.out_var_to_port[output_var].id_)))
+        postprocessing_policies.append(
+            (match(
+                state=output_var) >> modify(
+                state=None) >> fwd(
+                sdx_config.out_var_to_port[output_var].id_)))
     return parallel(postprocessing_policies)
 
 
@@ -243,11 +249,13 @@ def sdx_parse_config(config_file):
         ''' Adding physical ports '''
         print "Adding Physical ports for ", participant_name
         participant = sdx_config[participant_name]
-        sdx_ports[participant_name] = [PhysicalPort(id_=participant["Ports"][i]['Id'],
-                                                    mac=MAC(
-            participant["Ports"][i]["MAC"]),
-            ip=IP(participant["Ports"][i]["IP"]))
-            for i in range(0, len(participant["Ports"]))]
+        sdx_ports[participant_name] = [
+            PhysicalPort(
+                id_=participant["Ports"][i]['Id'], mac=MAC(
+                    participant["Ports"][i]["MAC"]), ip=IP(
+                    participant["Ports"][i]["IP"])) for i in range(
+                0, len(
+                    participant["Ports"]))]
         sdx.participant_2_port[participant_name] = {participant_name: []}
         for i in range(0, len(participant["Ports"])):
             sdx.port_2_participant[
@@ -273,8 +281,11 @@ def sdx_parse_config(config_file):
         print sdx.participant_2_port
 
         ''' Creating a participant object '''
-        sdx_participant = SDXParticipant(id_=participant_name, vport=sdx_vports[participant_name],
-                                         phys_ports=sdx_ports[participant_name], peers=peers)
+        sdx_participant = SDXParticipant(
+            id_=participant_name,
+            vport=sdx_vports[participant_name],
+            phys_ports=sdx_ports[participant_name],
+            peers=peers)
 
         ''' Adding the participant in the SDX '''
         sdx.add_participant(sdx_participant, participant_name)
@@ -291,8 +302,11 @@ def sdx_parse_policies(policy_file, sdx):
     print "Parsing participant's policies"
     for participant_name in sdx_policies:
         participant = sdx.participants[participant_name]
-        policy_modules = [import_module(sdx_policies[participant_name][i])
-                          for i in range(0, len(sdx_policies[participant_name]))]
+        policy_modules = [
+            import_module(
+                sdx_policies[participant_name][i]) for i in range(
+                0, len(
+                    sdx_policies[participant_name]))]
 
         participant.policies = parallel([
             policy_modules[i].policy(participant, sdx)
@@ -317,8 +331,10 @@ def sdx_parse_policies(policy_file, sdx):
 
     classifier = []
     for participant_name in sdx.participants:
-        sdx.participants[participant_name].policies = post_VNH(sdx.participants[participant_name].policies,
-                                                               sdx, participant_name)
+        sdx.participants[participant_name].policies = post_VNH(
+            sdx.participants[participant_name].policies,
+            sdx,
+            participant_name)
         # print "After Post VNH: ",sdx.participants[participant_name].policies
         start_comp = time.time()
         classifier.append(
@@ -334,8 +350,11 @@ def sdx_parse_announcements(announcement_file, sdx):
     '''
     for participant_name in sdx_announcements:
         participant = sdx.participants[participant_name]
-        announcement_modules = [import_module(sdx_announcements[participant_name][i])
-                                for i in range(0, len(sdx_announcements[participant_name]))]
+        announcement_modules = [
+            import_module(
+                sdx_announcements[participant_name][i]) for i in range(
+                0, len(
+                    sdx_announcements[participant_name]))]
 
         participant.custom_routes = []
         for announcement_module in announcement_modules:

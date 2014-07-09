@@ -27,7 +27,7 @@ def get_pdict(part_2_prefix):
         for plist in part_2_prefix[part]:
             if len(plist) > 1:
                 temp = temp.union(set(plist))
-                if (debug == True):
+                if (debug):
                     print "plist: ", plist
     return dict.fromkeys(list(temp), '')
 
@@ -54,7 +54,7 @@ def decompose_set(tdict, part_2_prefix_updated, tempdict_bk):
             pmap.append(set(lst))
 
     min_set = set.intersection(*pmap)
-    if (debug == True):
+    if (debug):
         print pmap
         print "min_set: ", min_set
     if len(min_set) > 0:
@@ -74,7 +74,7 @@ def decompose_set(tdict, part_2_prefix_updated, tempdict_bk):
 def decompose_simpler(part_2_prefix):
     part_2_prefix_updated = part_2_prefix
     pdict = get_pdict(part_2_prefix_updated)
-    if (debug == True):
+    if (debug):
         print "pdict: ", pdict
     for key in pdict:
         # print key
@@ -89,14 +89,14 @@ def decompose_simpler(part_2_prefix):
             if len(tlist) > 0:
                 tempdict[part] = tlist
                 tempdict_bk[part] = tlist
-        if (debug == True):
+        if (debug):
             print len(tempdict_bk), tempdict
         if (len(tempdict) == 1 and len(tempdict.values()[0]) == 1) == False:
             decompose_set(tempdict, part_2_prefix_updated, tempdict_bk)
         else:
-            if (debug == True):
+            if (debug):
                 print "Avoided"
-        if (debug == True):
+        if (debug):
             print part_2_prefix
     lcs = []
     for part in part_2_prefix_updated:
@@ -104,7 +104,7 @@ def decompose_simpler(part_2_prefix):
             tset = set(temp)
             if tset not in lcs:
                 lcs.append(tset)
-    if (debug == True):
+    if (debug):
         print "LCS: ", lcs
     return part_2_prefix_updated, lcs
 
@@ -145,22 +145,22 @@ def decmopose_parallel(part_2_prefix, q=None, index=0):
     P = len(partList)
     tmp1 = {}
     tmp2 = {}
-    if (debug == True):
+    if (debug):
         print P
     if P == 2:
         ndict = {}
         keys = part_2_prefix.keys()
         nkey = str(keys[0]) + str(keys[1])
-        if (debug == True):
+        if (debug):
             print nkey
         x, lcs = decompose_simpler(part_2_prefix)
-        if (debug == True):
+        if (debug):
             print part_2_prefix_updated
         ndict[nkey] = lcs
         return ndict
     elif P == 1:
         ndict = {}
-        if (debug == True):
+        if (debug):
             print part_2_prefix.keys()[0]
         x, lcs = decompose_simpler(part_2_prefix)
         ndict[part_2_prefix.keys()[0]] = lcs
@@ -186,13 +186,13 @@ def lcs_parallel(part_2_prefix):
         d1[part] = part_2_prefix[part]
 
         p2p_tmp = dict(d1.items() + lcs.items())
-        if (debug == True):
+        if (debug):
             print "d1: ", d1
             print "lcs: ", lcs
             print "p2p: ", p2p_tmp
         tmp, x = decompose_simpler(p2p_tmp)
         part_2_prefix_updated[part] = tmp[part]
-    if (debug == True):
+    if (debug):
         print "Final: ", part_2_prefix_updated
     return part_2_prefix, lcs.values()[0]
 
@@ -235,10 +235,10 @@ def lcs_recompute(p2p_old, p2p_new, part_2_prefix_updated, lcs_old=[]):
 def decompose_simpler_multi(part_2_prefix, q=None):
     part_2_prefix_updated = part_2_prefix
     pdict = get_pdict(part_2_prefix_updated)
-    if (debug == True):
+    if (debug):
         print "pdict: ", pdict
     for key in pdict:
-        if (debug == True):
+        if (debug):
             print key
         tempdict = {}
         tempdict_bk = {}
@@ -251,12 +251,12 @@ def decompose_simpler_multi(part_2_prefix, q=None):
             if len(tlist) > 0:
                 tempdict[part] = tlist
                 tempdict_bk[part] = tlist
-        if (debug == True):
+        if (debug):
             print len(tempdict_bk), tempdict
         if (len(tempdict) == 1 and len(tempdict.values()[0]) == 1) == False:
             decompose_set(tempdict, part_2_prefix_updated, tempdict_bk)
         else:
-            if (debug == True):
+            if (debug):
                 print "avoided"
     lcs = []
     for part in part_2_prefix_updated:
@@ -264,7 +264,7 @@ def decompose_simpler_multi(part_2_prefix, q=None):
             tset = set(temp)
             if tset not in lcs:
                 lcs.append(tset)
-    if (debug == True):
+    if (debug):
         print "LCS: ", lcs
     if q is not None:
         q.put((part_2_prefix_updated, lcs))
@@ -285,10 +285,10 @@ def decompose_multi(part_2_prefix, q=None, index=0):
         ndict = {}
         keys = part_2_prefix.keys()
         nkey = str(keys[0]) + str(keys[1])
-        if (debug == True):
+        if (debug):
             print nkey
         x, lcs = decompose_simpler_multi(part_2_prefix)
-        if (debug == True):
+        if (debug):
             print part_2_prefix
         ndict[nkey] = lcs
         print "Completed, len: ", P, part_2_prefix.keys()
@@ -315,7 +315,7 @@ def decompose_multi(part_2_prefix, q=None, index=0):
         process = []
         queue = []
         qout = []
-        if (debug == True):
+        if (debug):
             print tmp[0], tmp[1]
         print "index: ", index
         if index > 0 and index <= log(Np) / log(2):
@@ -343,7 +343,7 @@ def decompose_multi(part_2_prefix, q=None, index=0):
 
         lcs = decompose_multi(dict(qout[0].items() + qout[1].items()))
         print "Completed, len: ", P, part_2_prefix.keys()
-        if (debug == True):
+        if (debug):
             print lcs
         if q is not None:
             q.put(lcs)
@@ -372,7 +372,7 @@ def lcs_multiprocess(part_2_prefix):
                 part = parts[k * Np + i]
                 d1[part] = part_2_prefix[part]
                 tmp = dict(d1.items() + lcs.items())
-                if (debug == True):
+                if (debug):
                     print "d1: ", d1
                     print "lcs: ", lcs
                     print "tmp: ", tmp
@@ -397,7 +397,7 @@ def lcs_multiprocess(part_2_prefix):
                 print "Joined1: ", process[i], i
                 part_2_prefix_updated[part] = tmp[part]
 
-    if (debug == True):
+    if (debug):
         print "Final LCS: ", lcs
         print "Final P2P: ", part_2_prefix_updated
     return part_2_prefix_updated, lcs.values()[0]
@@ -422,20 +422,42 @@ def main():
     # prefix mapping
     # part_2_prefix={1:[['c3']],2:[['c3','c2'],['c1','c3']],3:[['c1','c2','c3']]}
 
-    part_2_prefix = {'A': [['p1', 'p2', 'p3'], ['p3', 'p2'], ['p1']],
-                     'C': [['p2', 'p3']], 'B': [['p2', 'p1'], ['p3']], 'D': [['p2', 'p3', 'p1']]}
-    part_2_prefix_old = {'A': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p3', 'p4', 'p5', 'p6'], ['p6', 'p4', 'p5'], ['p2', 'p3', 'p1']],
-                         'C': [['p3', 'p6', 'p4', 'p5']],
-                         'B': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], ['p2', 'p3', 'p6']],
-                         'D': [['p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
+    part_2_prefix = {'A': [['p1', 'p2', 'p3'], ['p3', 'p2'], ['p1']], 'C': [
+        ['p2', 'p3']], 'B': [['p2', 'p1'], ['p3']], 'D': [['p2', 'p3', 'p1']]}
+    part_2_prefix_old = {
+        'A': [
+            [
+                'p1', 'p2', 'p3', 'p4', 'p6'], [
+                'p3', 'p4', 'p5', 'p6'], [
+                    'p6', 'p4', 'p5'], [
+                        'p2', 'p3', 'p1']], 'C': [
+                            [
+                                'p3', 'p6', 'p4', 'p5']], 'B': [
+                                    [
+                                        'p1', 'p2', 'p3', 'p4', 'p6'], [
+                                            'p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], [
+                                                'p2', 'p3', 'p6']], 'D': [
+                                                    [
+                                                        'p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
     tmp = {'A': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p3', 'p4', 'p5', 'p6'], ['p6', 'p4', 'p5'], ['p2', 'p3', 'p1']],
            'C': [['p3', 'p6', 'p4', 'p5']],
            'B': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], ['p2', 'p3', 'p6']],
            'D': [['p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
-    part_2_prefix_new = {'A': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p3', 'p4', 'p5', 'p6'], ['p6', 'p5'], ['p4'], ['p2', 'p3', 'p1']],
-                         'C': [['p3', 'p6', 'p5']],
-                         'B': [['p1', 'p2', 'p3', 'p4', 'p6'], ['p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], ['p2', 'p3', 'p6']],
-                         'D': [['p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
+    part_2_prefix_new = {
+        'A': [
+            [
+                'p1', 'p2', 'p3', 'p4', 'p6'], [
+                'p3', 'p4', 'p5', 'p6'], [
+                    'p6', 'p5'], ['p4'], [
+                        'p2', 'p3', 'p1']], 'C': [
+                            [
+                                'p3', 'p6', 'p5']], 'B': [
+                                    [
+                                        'p1', 'p2', 'p3', 'p4', 'p6'], [
+                                            'p1', 'p2', 'p3', 'p4', 'p6'], ['p1'], ['p4'], [
+                                                'p2', 'p3', 'p6']], 'D': [
+                                                    [
+                                                        'p2', 'p3', 'p1', 'p6', 'p4', 'p5']]}
 
     print "old: ", part_2_prefix_old
     print "new: ", part_2_prefix_new

@@ -74,7 +74,7 @@ def is_Active(policy_in, pnum, participant_name, sdx, prefixes):
                 flag_active = False
                 plist.append(str(temp2.map['dstip']))
                 prefixes[str(temp2.map['dstip'])] = ''
-        if flag_active == False:
+        if not flag_active:
             sdx.policy_2_prefix[participant_name][pname] = plist
             sdx.policy_2_VNH[participant_name][pname] = {}
     # print sdx.policy_2_prefix
@@ -178,8 +178,8 @@ def get_default_forwarding_policy(best_path, participant, participant_list):
     # for peer in best_path:
     # print best_path,participant,participant_list
     # print best_path.keys()
-    policy_ip = parallel([match_prefixes_set(set(best_path[peer])) >> fwd(participant_list[participant][unicode(str(peer))][0])
-                          for peer in best_path.keys()])
+    policy_ip = parallel([match_prefixes_set(set(best_path[peer])) >> fwd(
+        participant_list[participant][unicode(str(peer))][0]) for peer in best_path.keys()])
     # print policy_ip
     return policy_ip
 
@@ -242,7 +242,8 @@ def extract_all_forward_actions_from_policy(policy, acc=[]):
         return fwd_set
     elif isinstance(policy, if_):
         return extract_all_forward_actions_from_policy(
-            policy.t_branch) | extract_all_forward_actions_from_policy(policy.f_branch)
+            policy.t_branch) | extract_all_forward_actions_from_policy(
+            policy.f_branch)
     else:
         # Base call
         if isinstance(policy, fwd):
@@ -261,12 +262,11 @@ def step5b_expand_policy_with_vnhop(policy, participant_id, sdx, acc=[]):
         return sequential(map(lambda p: step5b_expand_policy_with_vnhop(
             p, participant_id, sdx, acc), policy.policies))
     elif isinstance(policy, if_):
-        return if_(step5b_expand_policy_with_vnhop(policy.pred, participant_id, sdx),
-                   step5b_expand_policy_with_vnhop(
-            policy.t_branch,
-            participant_id,
-            sdx),
-            step5b_expand_policy_with_vnhop(policy.f_branch, participant_id, sdx))
+        return if_(
+            step5b_expand_policy_with_vnhop(
+                policy.pred, participant_id, sdx), step5b_expand_policy_with_vnhop(
+                policy.t_branch, participant_id, sdx), step5b_expand_policy_with_vnhop(
+                policy.f_branch, participant_id, sdx))
     else:
         # Base call
         if isinstance(policy, match_prefixes_set):
@@ -378,12 +378,11 @@ def step5a_expand_policy_with_prefixes(policy, participant, sdx, acc=[]):
         return sequential(map(lambda p: step5a_expand_policy_with_prefixes(
             p, participant, sdx, acc), policy.policies))
     elif isinstance(policy, if_):
-        return if_(step5a_expand_policy_with_prefixes(policy.pred, participant, sdx),
-                   step5a_expand_policy_with_prefixes(
-            policy.t_branch,
-            participant,
-            sdx),
-            step5a_expand_policy_with_prefixes(policy.f_branch, participant, sdx))
+        return if_(
+            step5a_expand_policy_with_prefixes(
+                policy.pred, participant, sdx), step5a_expand_policy_with_prefixes(
+                policy.t_branch, participant, sdx), step5a_expand_policy_with_prefixes(
+                policy.f_branch, participant, sdx))
     else:
         # Base call
         if isinstance(policy, match):
@@ -393,8 +392,12 @@ def step5a_expand_policy_with_prefixes(policy, participant, sdx, acc=[]):
             acc.append('dstip')
         elif isinstance(policy, fwd):
             if 'dstip' not in acc:
-                return match_prefixes_set(bgp_get_announced_routes(
-                    sdx, get_fwdPeer(sdx.participant_2_port[participant], policy.outport))) >> policy
+                return match_prefixes_set(
+                    bgp_get_announced_routes(
+                        sdx,
+                        get_fwdPeer(
+                            sdx.participant_2_port[participant],
+                            policy.outport))) >> policy
         return policy
 
 
