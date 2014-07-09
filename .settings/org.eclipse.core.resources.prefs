@@ -1,6 +1,0 @@
-eclipse.preferences.version=1
-encoding//exabgp/dev/unittest2/json-parser.py=utf-8
-encoding//exabgp/lib/exabgp/application/bgp.py=utf-8
-encoding//exabgp/lib/exabgp/configuration/json.py=utf-8
-encoding//exabgp/lib/exabgp/reactor/__init__.py=utf-8
-encoding//exabgp/lib/exabgp/rib/store.py=utf-8
