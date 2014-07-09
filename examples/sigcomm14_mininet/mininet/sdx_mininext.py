@@ -64,19 +64,19 @@ class QuaggaTopo( Topo ):
 
             quaggaContainer = self.addHost( name=host.name,
                                             ip=host.ip,
-					    mac=host.mac,
+                                            mac=host.mac,
                                             privateLogDir=True,
                                             privateRunDir=True,
                                             inMountNamespace=True,
                                             inPIDNamespace=True)
             self.addNodeService(node=host.name, service=quaggaSvc,
                                 nodeConfig=quaggaSvcConfig)
-	    "Attach the quaggaContainer to the IXP Fabric Switch"
+            "Attach the quaggaContainer to the IXP Fabric Switch"
             self.addLink( quaggaContainer, ixpfabric , port2=host.port)
-	
-	" Add root node for ExaBGP. ExaBGP acts as route server for SDX. "
-	root = self.addHost('exabgp', ip = '172.0.255.254/16', inNamespace = False)
-	self.addLink(root, ixpfabric, port2 = 5)
+        
+        " Add root node for ExaBGP. ExaBGP acts as route server for SDX. "
+        root = self.addHost('exabgp', ip = '172.0.255.254/16', inNamespace = False)
+        self.addLink(root, ixpfabric, port2 = 5)
         
 
 
@@ -84,33 +84,33 @@ def addInterfacesForSDXNetwork( net ):
     hosts=net.hosts
     print "Configuring participating ASs\n\n"
     for host in hosts:
-	print "Host name: ", host.name
-	if host.name=='a1':
-		host.cmdPrint('sudo ifconfig lo:1 100.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:2 100.0.0.2 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:110 110.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
-	if host.name=='b1':
-		host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
-	if host.name=='c1':
-		host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
-	if host.name=='c2':
-		host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
-		host.cmdPrint('sudo ifconfig -a')  
-	if host.name == "exabgp":
-		host.cmdPrint( 'route add -net 172.0.0.0/16 dev exabgp-eth0')
+        print "Host name: ", host.name
+        if host.name=='a1':
+            host.cmdPrint('sudo ifconfig lo:1 100.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.2 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:110 110.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig -a')  
+        if host.name=='b1':
+            host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig -a')  
+        if host.name=='c1':
+            host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig -a')  
+        if host.name=='c2':
+            host.cmdPrint('sudo ifconfig lo:140 140.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:150 150.0.0.1 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig -a')  
+        if host.name == "exabgp":
+            host.cmdPrint( 'route add -net 172.0.0.0/16 dev exabgp-eth0')
 
 def startNetwork():
     info( '** Creating Quagga network topology\n' )
     topo = QuaggaTopo()
     global net
     net = Mininext(topo=topo, 
-		controller=lambda name: RemoteController( name, ip='127.0.0.1' ),listenPort=6633)
+                controller=lambda name: RemoteController( name, ip='127.0.0.1' ),listenPort=6633)
     
     info( '** Starting the network\n' )
     net.start()
@@ -121,7 +121,7 @@ def startNetwork():
     info( '** psaux dumps on all hosts\n' )
     for lr in net.hosts:
         if lr.name != 'exabgp':
-	    lr.cmdPrint("ps aux")
+            lr.cmdPrint("ps aux")
     
     #info( '** Dumping host connections\n' )
     #dumpNodeConnections(net.hosts)

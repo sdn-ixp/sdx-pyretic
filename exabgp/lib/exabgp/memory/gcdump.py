@@ -16,16 +16,16 @@ def dump():
 		if len(s) > 80: s = "%s..." % s[:80]
 
 		print "::", s
-		print "		type:", type(x)
+		print "        type:", type(x)
 		print "   referrers:", len(gc.get_referrers(x))
 		try:
-			print "	is class:", inspect.isclass(type(x))
-			print "	  module:", inspect.getmodule(x)
+			print "    is class:", inspect.isclass(type(x))
+			print "      module:", inspect.getmodule(x)
 
 			lines, line_num = inspect.getsourcelines(type(x))
-			print "	line num:", line_num
+			print "    line num:", line_num
 			for l in lines:
-				print "		line:", l.rstrip("\n")
+				print "        line:", l.rstrip("\n")
 		except:
 			pass
 

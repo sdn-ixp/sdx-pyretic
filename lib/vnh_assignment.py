@@ -265,7 +265,7 @@ def step5b_expand_policy_with_vnhop(policy, participant_id, sdx, acc=[]):
         elif isinstance(policy, fwd):
 
             if len(list(acc)):
-            	xcl = 1 # TODO: clean this later
+                xcl = 1 # TODO: clean this later
         return policy
 
 def step5b(policy, participant, sdx):

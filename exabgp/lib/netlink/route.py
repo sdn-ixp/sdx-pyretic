@@ -99,7 +99,7 @@ class NetLinkRoute (object):
 			type,
 			sequence,
 			self.Flags.NLM_F_REQUEST | self.Flags.NLM_F_DUMP,
-            		pack('Bxxx', family),
+			pack('Bxxx', family),
 			{}
 		)
 
@@ -112,7 +112,7 @@ class NetLinkRoute (object):
 					if self._IGNORE_SEQ_FAULTS:
 						continue
 					raise NetLinkError("netlink seq mismatch")
-            			if mtype == self.Command.NLMSG_DONE:
+				if mtype == self.Command.NLMSG_DONE:
 					raise StopIteration()
 				elif type in self.errors:
 					raise NetLinkError(self.errors[mtype])
@@ -125,7 +125,7 @@ class NetLinkRoute (object):
 		message = self.encode(
 			type,
 			self.Flags.NLM_F_REQUEST | self.Flags.NLM_F_CREATE,
-            		pack('Bxxx', family)
+			pack('Bxxx', family)
 		)
 
 		self.socket.send(message)
@@ -137,7 +137,7 @@ class NetLinkRoute (object):
 					if self._IGNORE_SEQ_FAULTS:
 						continue
 					raise NetLinkError("netlink seq mismatch")
-            			if mtype == self.Command.NLMSG_DONE:
+				if mtype == self.Command.NLMSG_DONE:
 					raise StopIteration()
 				elif type in self.errors:
 					raise NetLinkError(self.errors[mtype])
@@ -190,10 +190,10 @@ class _InfoMessage (object):
 		self.route = route
 
 	def decode (self,data):
-    		extracted = list(unpack(self.Header.PACK,data[:self.Header.LEN]))
+		extracted = list(unpack(self.Header.PACK,data[:self.Header.LEN]))
 		attributes = Attributes().decode(data[self.Header.LEN:])
 		extracted.append(dict(attributes))
-    		return self.format(*extracted)
+		return self.format(*extracted)
 
 	def extract (self,type):
 		for data in self.route.query(type):
@@ -308,32 +308,32 @@ class Address (_InfoMessage):
 			RT_SCOPE_NOWHERE  = 0x00 # Destination does not exist
 
 		class Attribute (object):
-			IFLA_UNSPEC      = 0x00
-			IFLA_ADDRESS     = 0x01
-			IFLA_BROADCAST   = 0x02
-			IFLA_IFNAME      = 0x03
-			IFLA_MTU         = 0x04
-			IFLA_LINK        = 0x05
-		        IFLA_QDISC       = 0x06
-			IFLA_STATS       = 0x07
-			IFLA_COST        = 0x08
-			IFLA_PRIORITY    = 0x09
-			IFLA_MASTER      = 0x0A
-		        IFLA_WIRELESS    = 0x0B
-			IFLA_PROTINFO    = 0x0C
-			IFLA_TXQLEN      = 0x0D
-			IFLA_MAP         = 0x0E
-			IFLA_WEIGHT      = 0x0F
-		        IFLA_OPERSTATE   = 0x10
-			IFLA_LINKMODE    = 0x11
-			IFLA_LINKINFO    = 0x12
-			IFLA_NET_NS_PID  = 0x13
-		        IFLA_IFALIAS     = 0x14
-			IFLA_NUM_VF      = 0x15
+			IFLA_UNSPEC	 = 0x00
+			IFLA_ADDRESS	 = 0x01
+			IFLA_BROADCAST	 = 0x02
+			IFLA_IFNAME	 = 0x03
+			IFLA_MTU	 = 0x04
+			IFLA_LINK	 = 0x05
+			IFLA_QDISC	 = 0x06
+			IFLA_STATS	 = 0x07
+			IFLA_COST	 = 0x08
+			IFLA_PRIORITY	 = 0x09
+			IFLA_MASTER	 = 0x0A
+			IFLA_WIRELESS	 = 0x0B
+			IFLA_PROTINFO	 = 0x0C
+			IFLA_TXQLEN	 = 0x0D
+			IFLA_MAP	 = 0x0E
+			IFLA_WEIGHT	 = 0x0F
+			IFLA_OPERSTATE	 = 0x10
+			IFLA_LINKMODE	 = 0x11
+			IFLA_LINKINFO	 = 0x12
+			IFLA_NET_NS_PID	 = 0x13
+			IFLA_IFALIAS	 = 0x14
+			IFLA_NUM_VF	 = 0x15
 			IFLA_VFINFO_LIST = 0x16
-			IFLA_STATS64     = 0x17
-		        IFLA_VF_PORTS    = 0x18
-			IFLA_PORT_SELF   = 0x19
+			IFLA_STATS64	 = 0x17
+			IFLA_VF_PORTS	 = 0x18
+			IFLA_PORT_SELF	 = 0x19
 
 	def getAddresses (self):
 		return self.extract(self.Command.RTM_GETADDR)
