@@ -48,7 +48,7 @@ from pyretic.sdx.lib.bgp_interface import *
 from pyretic.sdx.lib.set_operations import *
 from pyretic.sdx.lib.language import *
 from pyretic.sdx.lib.vnh_assignment import *
-from pyretic.sdx.lib.composition import simple
+from pyretic.sdx.lib.composition import simple_compose
 
 # TODO: these should be added in the config file --AG
 VNH_2_IP = {
