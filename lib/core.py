@@ -277,7 +277,7 @@ def sdx_parse_config(config_file):
         print "Adding Physical ports for ", participant_name
         participant = sdx_config[participant_name]
         sdx_ports[participant_name] = [PhysicalPort(id_=participant["Ports"][i]['Id'],mac=MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
-        #print sdx_ports[participant_name]
+        print sdx_ports[participant_name]
         ''' Adding virtual port '''
         print "Adding virtual ports for ", participant_name
         sdx_vports[participant_name] = VirtualPort(participant=participant_name) #Check if we need to add a MAC here
