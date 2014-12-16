@@ -488,7 +488,9 @@ def post_VNH(policy, sdx, participant_name):
             i = 0
             for port in sdx.participant_2_port[participant_name][peer]:
                 port_2_state[port] = 'out' + peer + '_' + str(i)
-                port_2_mac[port]=sdx.sdx_ports[participant_name][i].mac
+                print i
+                if i<len(sdx.sdx_ports[participant_name]):
+                    port_2_mac[port]=sdx.sdx_ports[participant_name][i].mac
                 i += 1
                 
     # print port_2_state
