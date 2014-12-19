@@ -65,7 +65,7 @@ from pyretic.sdx.lib.vnh_assignment import *
 
 participant_2_port={'A':{'A':[1],'C':[2]},
                     'C':{'A':[1],'C':[2]}
-#                   }
+                   }
 
 
 port_2_participant = {
@@ -277,8 +277,8 @@ def sdx_parse_config(config_file):
         Create SDX environment ...
     '''
     print "Creating SDX environment from the config files"
-    for (participant,name) in sdx_config.items():
-        
+    for (name,participant) in sdx_config.items():
+        sdx_ports[name]=[]
         ''' Adding physical ports '''
         print "Adding Physical ports for ", name
         for port in participant["Ports"]:
@@ -288,8 +288,8 @@ def sdx_parse_config(config_file):
             port_2_participant[port['Id']]=name                                           
         print port_2_participant
         ''' Adding virtual port '''
-        print "Adding virtual ports for ", participant_name
-        sdx_vports[participant_name] = VirtualPort(participant=participant_name) #Check if we need to add a MAC here
+        print "Adding virtual ports for ", name
+        sdx_vports[name] = VirtualPort(participant=name) #Check if we need to add a MAC here
     
     sdx.sdx_ports=sdx_ports   
     for participant_name in sdx_config:
