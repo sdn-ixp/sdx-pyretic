@@ -11,7 +11,7 @@ exabgp)
       echo "Do not perform this operation as root" 1>&2
       exit 1
    fi
-   $HOME/pyretic/pyretic/sdx/exabgp/sbin/exabgp --env $HOME/pyretic/pyretic/sdx/exabgp/etc/exabgp/exabgp.env $HOME/pyretic/pyretic/sdx/bgp/bgp.conf
+   $HOME/sdx/exabgp/sbin/exabgp --env $HOME/sdx/exabgp/etc/exabgp/exabgp.env $HOME/sdx/bgp/bgp.conf
   ;;
  pyretic)
    echo "Starting Pyretic ..."
