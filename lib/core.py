@@ -277,13 +277,16 @@ def sdx_parse_config(config_file):
         Create SDX environment ...
     '''
     print "Creating SDX environment from the config files"
-    for participant_name in sdx_config:
+    for (participant,name) in sdx_config.items():
         
         ''' Adding physical ports '''
-        print "Adding Physical ports for ", participant_name
-        participant = sdx_config[participant_name]
-        sdx_ports[participant_name] = [PhysicalPort(id_=participant["Ports"][i]['Id'],mac=MAC(participant["Ports"][i]["MAC"]),ip=IP(participant["Ports"][i]["IP"])) for i in range(0, len(participant["Ports"]))]     
-        print sdx_ports[participant_name]
+        print "Adding Physical ports for ", name
+        for port in participant["Ports"]:
+            sdx_ports[name].append( PhysicalPort(id_=port['Id'],
+                                              mac=MAC(port["MAC"]),
+                                              ip=IP(port["IP"])))
+            port_2_participant[port['Id']]=name                                           
+        print port_2_participant
         ''' Adding virtual port '''
         print "Adding virtual ports for ", participant_name
         sdx_vports[participant_name] = VirtualPort(participant=participant_name) #Check if we need to add a MAC here
