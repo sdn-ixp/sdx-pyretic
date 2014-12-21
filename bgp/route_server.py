@@ -76,6 +76,7 @@ class route_server():
                         for paticipant_name in self.sdx.participants:
                             route = self.sdx.participants[paticipant_name].rs_client.get_route('local',prefix)
                             if route:
+                                print "Cool stuff should be happening"
                                 self.server.sender_queue.put(announce_route(route,self.sdx.VNH_2_IP[VNH]))
                                 break
 
