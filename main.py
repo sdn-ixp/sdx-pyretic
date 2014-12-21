@@ -130,9 +130,7 @@ def main():
     
     return if_(ARP,
                    arp_policy,
-#                   if_(BGP,
-#                           identity,
-#                           policy
-#                   )
-                               identity
+                   if_(BGP,
+                           identity,
+                           policy)
                ) >> mac_learner()
