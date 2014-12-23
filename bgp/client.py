@@ -64,7 +64,7 @@ if __name__ == '__main__':
 	
 	log = open(logfile, "w")
 		
-	conn = Client(('143.215.218.65', 6000), authkey='sdx')
+	conn = Client(('143.215.216.192', 6000), authkey='sdx')
 	
 	sender = Thread(target=_sender, args=(conn,sys.stdin,log))
 	sender.start()
