@@ -57,24 +57,18 @@ from pyretic.sdx.lib.vnh_assignment import *
 ###
 # TODO: These should be automatically generated using the sdx_config.cfg file
 
-#participant_2_port={'A':{'A':[1],'B':[2],'C':[3],'D':[6]},
-#                    'B':{'A':[1],'B':[2],'C':[3],'D':[6]},
-#                    'C':{'A':[1],'B':[2],'C':[3,4],'D':[6]},
-#                    'D':{'A':[1],'B':[2],'C':[3],'D':[6]}
-#                   }
-
-participant_2_port={'A':{'A':[1],'C':[2]},
-                    'C':{'A':[1],'C':[2]}
+participant_2_port={'A':{'A':[13],'B':[14],'C':[15]},
+                    'B':{'A':[13],'B':[14],'C':[15]},
+                    'C':{'A':[13],'B':[14],'C':[15,4]},
                    }
 
-
 port_2_participant = {
-        1  : 'A',
-#        2  : 'B',
-#        3  : 'C',
-#        4  : 'C',
+        13  : 'A',
+        14  : 'B',
+        15  : 'C',
+        4  : 'C',
 #        6  : 'D'
-        2  : 'C'
+#        2  : 'C'
     }
 
 # TODO: these should be added in the config file too and auto-generated
