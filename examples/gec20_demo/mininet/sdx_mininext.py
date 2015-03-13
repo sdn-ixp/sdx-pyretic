@@ -88,6 +88,13 @@ def addInterfacesForSDXNetwork( net ):
         if host.name=='a1':
             host.cmdPrint('sudo ifconfig lo:1 100.0.0.1 netmask 255.255.255.0 up')
             host.cmdPrint('sudo ifconfig lo:2 100.0.0.2 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.3 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.4 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.5 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.6 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.7 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.8 netmask 255.255.255.0 up')
+            host.cmdPrint('sudo ifconfig lo:2 100.0.0.9 netmask 255.255.255.0 up')
             host.cmdPrint('sudo ifconfig lo:110 110.0.0.1 netmask 255.255.255.0 up')
             host.cmdPrint('sudo ifconfig -a')  
         if host.name=='b1':
