@@ -34,6 +34,19 @@ EXAMPLE_NAME=$2
 	echo "Directory does not exists: $HOME/pyretic/pyretic/sdx/examples/$EXAMPLE_NAME"
    fi 
   ;;
+ demo)
+EXAMPLE_NAME=$2
+   if [ -d "$HOME/pyretic/pyretic/sdx/examples/$EXAMPLE_NAME" ]; then
+   	echo "Starting Mininet ..."
+   	if [ "$(id -u)" == "0" ]; then
+      		echo "Do not perform this operation as root" 1>&2
+      		exit 1
+   	fi
+   (sudo python $HOME/pyretic/pyretic/sdx/examples/$EXAMPLE_NAME/mininet/demo.py)
+   else
+	echo "Directory does not exists: $HOME/pyretic/pyretic/sdx/examples/$EXAMPLE_NAME"
+   fi 
+  ;;
  clearrib)
    echo "Clearing RIB ..."
    rm -rf $HOME/pyretic/pyretic/sdx/ribs/*
