@@ -51,6 +51,7 @@ from pyretic.sdx.utils.inet import *
 from pyretic.sdx.lib.core import *
 from pyretic.sdx.lib.bgp_interface import *
 from pyretic.sdx.bgp.route_server import route_server
+from pyretic.sdx.lib.policy_updates import PolicyHandler
 
 ''' Get current working directory ''' 
 cwd = os.getcwd()
@@ -78,6 +79,14 @@ class sdx_policy(DynamicPolicy):
         dynamic_update_policy_thread.daemon = True
         dynamic_update_policy_thread.start()   
         
+        ''' Participant's Policy change handler '''
+        ps = PolicyHandler(event_queue, ready_queue, self.sdx)
+        ps_thread = Thread(target=ps.start)
+        ps_thread.daemon = True
+        ps_thread.start()
+        
+
+        
         ''' Router Server interface thread '''
         # TODO: confirm if we need RIBs per participant or per peer!
         rs = route_server(event_queue,ready_queue,self.sdx)
@@ -98,12 +107,13 @@ class sdx_policy(DynamicPolicy):
         
         # TODO: Optimize policy update taking into consideration only the delta changes in the policies
         # This checks for two things: 
-	# (1) Participant's policy has changed, 
-	# (2) BGP Updates changed the existing VNH to IP Prefix mapping 
-	sdx_parse_policies(cwd+'/pyretic/sdx/sdx_policies.cfg',self.sdx)
+    	# (1) Participant's policy has changed, 
+    	# (2) BGP Updates changed the existing VNH to IP Prefix mapping 
+    	sdx_parse_policies(cwd+'/pyretic/sdx/sdx_policies.cfg',self.sdx)
         
         ''' Get updated policy '''
         self.policy = self.sdx.compose_policies()
+        #print self.policy
 
         ''' Get updated IP to MAC list '''
         self.arp_policy.mac_of = get_ip_mac_list(self.sdx.VNH_2_IP,self.sdx.VNH_2_MAC)
@@ -115,10 +125,12 @@ def dynamic_update_policy_event_hadler(event_queue,ready_queue,update_policy):
         event_source=event_queue.get()
         
         ''' Compile updates '''
+        print "Policy Update called"
         update_policy()
         
         if ('bgp' in event_source):
             ready_queue.put(event_source)
+        
 
         
 ''' Main '''
