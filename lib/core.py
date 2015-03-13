@@ -48,7 +48,7 @@ from pyretic.sdx.lib.bgp_interface import *
 from pyretic.sdx.lib.set_operations import *
 from pyretic.sdx.lib.language import *
 from pyretic.sdx.lib.vnh_assignment import *
-from pyretic.sdx.lib.composition import simple_compose
+from pyretic.sdx.lib.composition import simple_compose, naive_compose
 
 # TODO: these should be added in the config file --AG
 VNH_2_IP = {
@@ -66,6 +66,10 @@ class SDX(object):
         self.compose_mode = 0       # 0:sdx_platform
         
         self.participants = {}
+        
+        self.policy_status = {}
+        self.default_policy = {}
+        #self.default_policy = (match_prefixes_set(set(prefixes_announced)) >> sdx.fwd(participant.phys_ports[0]))
         
         self.sdx_ports={}
         self.participant_id_to_in_var = {}
@@ -106,7 +110,10 @@ class SDX(object):
         return neighbor_list
     
     def add_participant(self, participant, name):
-        self.participants[name] = participant
+        # By default turn off all participant's policies
+        self.policy_status[str(name)] = 0
+        
+        self.participants[name] = participant        
         self.participant_id_to_in_var[participant.id_] = "in" + participant.id_.upper()
         i = 0
         for port in participant.phys_ports:
@@ -115,15 +122,26 @@ class SDX(object):
             i += 1
     
     def fwd(self, port):
+        # Hides the virtual to physical port mapping from participants
+        #return fwd(port.id_)
+        
         if isinstance(port, PhysicalPort):
-            return modify(state=self.port_id_to_out_var[port.id_], dstmac=port.mac)
+            #return modify(state=self.port_id_to_out_var[port.id_], dstmac=port.mac)
+            return fwd(port.id_)
         else:
             return modify(state=self.participant_id_to_in_var[port.participant.id_])
+         
         
     def compose_policies(self):
         # Compose participant's policies using various composition approaches
         if self.compose_mode == 0:
             return simple_compose(self)
+            #return naive_compose(self)
+            
+    def get_default_policies(self, pname):
+        # Get default policies for given participant
+        prefixes_announced=bgp_get_announced_routes(self,pname)
+        return (match_prefixes_set(set(prefixes_announced)) >> self.fwd(self.participants[pname].phys_ports[0]))
         
             
         
@@ -193,10 +211,13 @@ def sdx_parse_policies(policy_file,sdx):
         participant = sdx.participants[participant_name]
         policy_modules = [import_module(sdx_policies[participant_name][i]) 
                           for i in range(0, len(sdx_policies[participant_name]))]
-        
-        participant.policies = parallel([
-             policy_modules[i].policy(participant, sdx) 
-             for i in range(0, len(sdx_policies[participant_name]))])  
+        if sdx.policy_status[participant_name] ==0:
+            
+            participant.policies = sdx.get_default_policies(participant_name)
+        else:
+            participant.policies = parallel([
+                 policy_modules[i].policy(participant, sdx) 
+                 for i in range(0, len(sdx_policies[participant_name]))])  
         #print "Before pre",participant.policies
         # translate these policies for VNH Assignment
         participant.original_policies=participant.policies
