@@ -467,15 +467,15 @@ def vnh_assignment(sdx):
             # Step 5
             # Step 5a: Get expanded policies
             for participant in sdx.participants:
-                # print "PARTICIPANT: ",participant
+                print "PARTICIPANT: ",participant
                 X_policy = sdx.participants[participant].policies
-                # print "Original policy:", X_policy
+                print "Original policy:", X_policy
 
                 X_a = step5a(X_policy, participant, sdx)
-                # print "Policy after 5a:\n\n", X_a
+                print "Policy after 5a:\n\n", X_a
 
                 X_b = step5b(X_a, participant, sdx)
-                # print "Policy after Step 5b:", X_b
+                print "Policy after Step 5b:", X_b
 
                 sdx.participants[participant].policies = X_b
     else:

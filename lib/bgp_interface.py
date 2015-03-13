@@ -49,12 +49,16 @@ def bgp_get_best_routes(sdx, participant_name):
                     port.ip))
 
             if routes:
-                if (peer_name not in best_routes):
-                    best_routes[peer_name] = []
+                
 
                 for route in routes:
-                    best_routes[peer_name].append(route['prefix'])
-
+                    announced_route = bgp_get_announced_routes(sdx, participant_name)
+                    print "announced route: ", participant_name, announced_route, route['prefix']
+                    if route['prefix'] not in announced_route:
+                        if (peer_name not in best_routes):
+                            best_routes[peer_name] = []
+                        best_routes[peer_name].append(route['prefix'])
+    print "best_routes: ", participant_name, best_routes
     return best_routes
 
 ''' Get announced routes for a participant '''
